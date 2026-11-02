@@ -1,0 +1,54 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+TestResults/
+outbox/
+audit.log
+
+coveragereport/
+
+*.received.*
+## Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+out/
+[Ll]og/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio generated files
+*.cache
+*.pdb
+*.ilk
+*.meta
+*.opendb
+*.VC.db
+
+## NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+
+## Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+## OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
