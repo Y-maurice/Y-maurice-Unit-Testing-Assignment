@@ -23,7 +23,7 @@ Format: line % (covered/coverable) · branch % (covered/total).
 | Step | Date | Domain | Application | Infrastructure | Overall | Screenshot |
 | --- | --- | --- | --- | --- | --- | --- |
 | Baseline (5 legacy tests only, before Task 1) | 2026-11-02 | 3.9% (4/101) · 0% (0/18) | 7.8% (27/346) · 3.2% (6/186) | 0% (0/200) · 0% (0/20) | 4.7% (31/647) · 2.6% (6/224) | `screenshots/coverage-baseline.png` |
-| After Task 1 | | | | | | |
+| After Task 1 | 2026-11-04 | 21.7% (22/101) · 61.1% (11/18) | 7.8% (27/346) · 3.2% (6/186) | 0% (0/200) · 0% (0/20) | 7.5% (49/647) · 7.5% (17/224) | `screenshots/coverage-after-task1.png` |
 | After Task 5 | | | | | | |
 | After Task 6 | | | | | | |
 | After Task 7 | | | | | | |
@@ -34,6 +34,7 @@ Format: line % (covered/coverable) · branch % (covered/total).
 - The baseline was measured with only `DriveNow.LegacyTests`: 5 tests, all passing.
 - The report contains 3 assemblies (Domain, Application, Infrastructure). `DriveNow.ConsoleApp` does not appear because no test project loads it. The exclusion rule in R3 is therefore not needed yet.
 - The only well-covered class is `ReceiptService` (100% line, 100% branch). Everything else in Application, Domain and Infrastructure is at or near 0%.
+- After Task 1, Domain line coverage rose from 3.9% to 21.7% and branch coverage from 0% to 61.1%, because `RentalMathTests` exercises `RentalMath`. Application and Infrastructure are unchanged. The numbers are identical before and after the AI-suggested cases: the extra rows hit lines and branches that were already covered, so coverage does not show how good the boundary tests are.
 
 ## R3: Exclusions
 
