@@ -24,6 +24,9 @@ public class RentalMathTests
     [InlineData("2000-02-29", "2025-02-27", 24)] // Leap birthday: before Feb 28
     [InlineData("2000-02-29", "2025-02-28", 25)] // Leap birthday: Feb 28
     [InlineData("2000-02-29", "2024-02-28", 23)] // Leap year: before birthday
+    [InlineData("2000-02-29", "2024-02-29", 24)]
+    [InlineData("2025-11-04", "2026-11-03", 0)]
+    [InlineData("2025-11-04", "2026-11-04", 1)]
     public void CalculateAge_AroundBirthdays_ReturnsFullYears(string dateOfBirth, string onDate, int expected)
     {
         var result = RentalMath.CalculateAge(
@@ -43,6 +46,8 @@ public class RentalMathTests
     [InlineData("2020-06-15", "2025-06-16", 5)] // Day after anniversary
     [InlineData("2020-02-29", "2025-02-27", 4)] // Leap anniversary: before
     [InlineData("2020-02-29", "2025-02-28", 5)] // Leap anniversary: Feb 28
+    [InlineData("2026-11-03", "2026-11-04", 0)]
+    [InlineData("2025-11-04", "2026-11-04", 1)]// exact first anniversary
     public void CalculateLicenseYears_AroundAnniversaries_ReturnsFullYears(
         string issueDate,
         string onDate,
@@ -65,6 +70,10 @@ public class RentalMathTests
     [InlineData(1500, 1)] // 25h 00m (exactly 60m remainder)
     [InlineData(1501, 2)] // 25h 01m (more than 60m remainder)
     [InlineData(180, 1)]  // 3h
+    [InlineData(1440, 1)]
+    [InlineData(2880, 2)]
+    [InlineData(4320, 3)]
+    [InlineData(1, 1)]
     public void CalculateRentalDays_AroundGraceHour_ReturnsExpectedDays(
         int rentalMinutes,
         int expected)
@@ -97,5 +106,18 @@ public class RentalMathTests
         act.Should()
             .Throw<ArgumentException>()
             .WithMessage("Return must be after pickup");
+    }
+
+
+    [Fact]
+    [Trait("Rule", "BR-03")]
+    public void CalculateRentalDays_ReturnOneTickAfterPickup_ReturnsOneDay()
+    {
+        var pickup = ParseDate("2026-01-01");
+        var returnAt = pickup.AddTicks(1);
+
+        var result = RentalMath.CalculateRentalDays(pickup, returnAt);
+
+        result.Should().Be(1);
     }
 }
