@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using DriveNow.Application.Bookings;
+﻿using DriveNow.Application.Bookings;
 using DriveNow.Application.Models;
 using DriveNow.Application.Receipts;
 using DriveNow.Application.Services;
@@ -9,6 +8,7 @@ using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
 using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Repositories;
+using System.Globalization;
 
 namespace DriveNow.ConsoleApp;
 
@@ -17,7 +17,7 @@ internal static class Program
     static readonly CustomerRepo Customers = new();
     static readonly VehicleRepository Vehicles = new();
     static readonly BookingRepository Bookings = new();
-    static readonly PricingService Pricing = new();
+    static readonly PricingService Pricing = new(TimeProvider.System);
     static readonly BookingService BookingService = new();
     static readonly ReturnService ReturnService = new();
     static readonly CancellationService CancellationService = new();
