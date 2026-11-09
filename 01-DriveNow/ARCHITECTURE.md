@@ -13,7 +13,7 @@
 | 2 | R4: repositories end with `Repository` · `Repositories_TypeNames_EndWithRepository` | `Infrastructure.Repositories.CustomerRepo` | The convention is broken for one repository, and `ConsoleApp` uses the odd name (`static readonly CustomerRepo Customers`). Naming rules, doubles (`FakeCustomerRepository`) and the architecture tests cannot treat all repositories the same way until it is renamed. |
 | 3 | R4: exceptions live in `Domain.Exceptions` · `Exceptions_Namespace_IsDomainExceptions` | `Infrastructure.External.PaymentFailedException` | BR-26 says a payment failure saves nothing, so a test of `BookingService` needs a fake gateway that throws this exception. If the exception stays in Infrastructure, the Application code and its tests can only know it by referencing Infrastructure, which R2 forbids. |
 | 4 | R4: services live in a `Services` namespace · `Services_Namespace_IsServices` | `Application.Receipts.ReceiptService`, `Application.Bookings.CancellationService` | Services spread over `Receipts` and `Bookings` instead of `Services`, so one rule or one search cannot find them all, and it breaks the layout my `NAMING.md` promises. |
-| 5 | R4 (extra check): classes in a `Services` namespace end with `Service` · `Services_TypeNames_EndWithService` | `Domain.Services.RentalMath` | <my decision: it is a static calculator, not a service. Either I rename or move it in Task 4, or I remove this test because `NAMING.md` only requires that classes named ...Service live in a Services namespace. Say which, and why.> |
+| 5 | R4 (extra check): classes in a `Services` namespace end with `Service` · `Services_TypeNames_EndWithService` | `Domain.Services.RentalMath` | It does not hurt testability: `RentalMath` is a pure static calculator that receives all its inputs as parameters. The only cost was naming consistency. **Decision (Task 4): I removed this extra check.** `NAMING.md` only requires that classes named `...Service` live in a `Services` namespace, which `Services_Namespace_IsServices` already checks. The extra check also demanded that every class in a `Services` namespace be named `...Service`, so passing it meant renaming or moving `RentalMath` (used by the domain, the services and `RentalMathTests`) for a rule my convention never stated. |
 
 ### Rules that pass on the starter
 
@@ -23,9 +23,17 @@
 - `Exceptions_TypeNames_EndWithException` and `Repositories_Namespace_IsRepositories` pass.
 - `Interfaces_AllProductionTypes_StartWithI` passes on real data: the starter has four interfaces, all in `Application.Receipts` (`ICurrencyFormatter`, `ILineItemFactory`, `IReceiptFormatter`, `ITaxCalculator`), and all start with `I`. Nothing abstracts the repositories, the payment gateway, the senders, the audit log or the clock, which is what row 1 means in practice: the dependencies that make the code hard to test have no interface yet.
 
-## Task 4: status of the failures
+## Task 4: how each failure was resolved
 
-After the clock step (`TimeProvider`) and the reference-generator step, `dotnet test` still shows 44 tests with 6 failures: the known `RentalMath` 1500-minute case and the same 5 architecture failures as above. These steps added no new violation, and each of the five rows is cleared by a later step (renames and moves, interfaces for the external services, and the data store as an instance).
+After the renames and moves, `dotnet test` shows 43 tests with 2 failures: the known `RentalMath` 1500-minute case and rule R2. The 5 legacy tests still pass, and the console output is unchanged (compared on the same day).
+
+| # | Failure | Resolution |
+| --- | --- | --- |
+| 2 | `CustomerRepo` | Renamed to `CustomerRepository` (class, file, and its uses in the services and in `Program.cs`). Commit `refactor: rename CustomerRepo to CustomerRepository`. |
+| 3 | `PaymentFailedException` in Infrastructure | Moved to the Domain project, namespace `DriveNow.Domain.Exceptions`. `PaymentGateway` and `ConsoleApp` import it from Domain, and the services already imported `DriveNow.Domain.Exceptions`, so Application can now know the exception without referencing Infrastructure. Commit `refactor: move PaymentFailedException to Domain.Exceptions`. |
+| 4 | `CancellationService` and `ReceiptService` outside `Services` | Both moved to the `DriveNow.Application.Services` namespace. `ReceiptService` keeps using the interfaces that stay in `Application.Receipts`. Commits `refactor: move CancellationService to the Services namespace` and `refactor: move ReceiptService to the Services namespace`. |
+| 5 | `RentalMath` name | The extra check was removed (see row 5 above), so the architecture suite has 11 tests. |
+| 1 | R2: `Application` references `Infrastructure` | **Still open.** `BookingService`, `CancellationService`, `PricingService` and `ReturnService` still create the real repositories, payment gateway, senders and audit log. It is cleared by the interface steps: external services behind interfaces, then the data store as an instance with repository interfaces. |
 
 ## Task 4: where the new interfaces live
 
