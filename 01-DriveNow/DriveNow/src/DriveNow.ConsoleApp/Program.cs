@@ -16,14 +16,16 @@ namespace DriveNow.ConsoleApp;
 internal static class Program
 {
     static readonly IPaymentGateway Payments = new PaymentGateway();
+    static readonly ISmsSender Sms = new SmsSender();
+
 
     static readonly CustomerRepository Customers = new();
     static readonly VehicleRepository Vehicles = new();
     static readonly BookingRepository Bookings = new();
     static readonly PricingService Pricing = new(TimeProvider.System);
-    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments);
+    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms);
     static readonly ReturnService ReturnService = new(TimeProvider.System, Payments);
-    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments);
+    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms);
     static void Main()
     {
         PriceSeedBookings();
