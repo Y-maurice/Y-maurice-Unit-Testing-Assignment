@@ -7,6 +7,7 @@ using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
 using DriveNow.Infrastructure.External;
+using DriveNow.Infrastructure.Generators;
 using DriveNow.Infrastructure.Repositories;
 using System.Globalization;
 
@@ -18,7 +19,7 @@ internal static class Program
     static readonly VehicleRepository Vehicles = new();
     static readonly BookingRepository Bookings = new();
     static readonly PricingService Pricing = new(TimeProvider.System);
-    static readonly BookingService BookingService = new(TimeProvider.System);
+    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator());
     static readonly ReturnService ReturnService = new(TimeProvider.System);
     static readonly CancellationService CancellationService = new(TimeProvider.System);
     static void Main()

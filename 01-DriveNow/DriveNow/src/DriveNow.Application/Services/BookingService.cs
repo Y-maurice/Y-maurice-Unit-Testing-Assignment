@@ -1,4 +1,5 @@
 using DriveNow.Application.Models;
+using DriveNow.Domain.Abstractions;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
@@ -20,10 +21,12 @@ public class BookingService
     readonly SmsSender _sms = new();
     readonly EmailSender _email = new();
     readonly TimeProvider _time;
+    readonly IReferenceGenerator _references;
 
-    public BookingService(TimeProvider time)
+    public BookingService(TimeProvider time, IReferenceGenerator references)
     {
         _time = time;
+        _references = references;
         _pricing = new PricingService(time);
     }
 
@@ -65,7 +68,7 @@ public class BookingService
             Status = BookingStatus.Reserved,
             CreatedAt = Now,
             StartMileage = vehicle.Mileage,
-            Reference = "DN-" + request.PickupAt.ToString("yyyyMMdd") + "-" + RandomCode()
+            Reference = _references.Generate(request.PickupAt)
         };
 
         booking.Deposit = DepositFor(vehicle.Category, request.InsurancePlan, customer.LoyaltyTier);
@@ -121,7 +124,7 @@ public class BookingService
             throw new BookingRejectedException("License must be held for at least 1 year");
     }
 
-    // No longer static: it reads the clock through Now.
+    // Not static: it reads the clock through Now.
     void RejectVehicle(Vehicle vehicle, int age, int licenseYears, BookingRequest request)
     {
         if (!vehicle.IsAvailable)
@@ -156,16 +159,5 @@ public class BookingService
             deposit = Math.Round(deposit / 2m, 2, MidpointRounding.AwayFromZero);
 
         return deposit;
-    }
-
-    static string RandomCode()
-    {
-        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        var random = new Random();
-        var chars = new char[4];
-        for (var i = 0; i < chars.Length; i++)
-            chars[i] = alphabet[random.Next(alphabet.Length)];
-
-        return new string(chars);
     }
 }
