@@ -1,3 +1,4 @@
+using DriveNow.Domain.Abstractions;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Infrastructure.External;
@@ -12,12 +13,16 @@ public class CancellationService
     readonly VehicleRepository _vehicles = new();
     readonly CustomerRepository _customers = new();
     readonly PromoCodeRepository _promos = new();
-    readonly PaymentGateway _payments = new();
+    readonly IPaymentGateway _payments;
     readonly SmsSender _sms = new();
     readonly EmailSender _email = new();
     readonly TimeProvider _time;
 
-    public CancellationService(TimeProvider time) => _time = time;
+    public CancellationService(TimeProvider time, IPaymentGateway payments)
+    {
+        _time = time;
+        _payments = payments;
+    }
 
     public decimal Cancel(int bookingId)
     {

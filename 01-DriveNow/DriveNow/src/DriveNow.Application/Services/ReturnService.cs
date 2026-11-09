@@ -1,4 +1,5 @@
 using DriveNow.Application.Receipts;
+using DriveNow.Domain.Abstractions;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
@@ -15,11 +16,15 @@ public class ReturnService
     readonly BookingRepository _bookings = new();
     readonly VehicleRepository _vehicles = new();
     readonly CustomerRepository _customers = new();
-    readonly PaymentGateway _payments = new();
+    readonly IPaymentGateway _payments;
     readonly EmailSender _email = new();
     readonly TimeProvider _time;
 
-    public ReturnService(TimeProvider time) => _time = time;
+    public ReturnService(TimeProvider time, IPaymentGateway payments)
+    {
+        _time = time;
+        _payments = payments;
+    }
 
     public ReturnReport ProcessReturn(int bookingId, int endMileage, int fuelQuarters, decimal damageCost)
     {
