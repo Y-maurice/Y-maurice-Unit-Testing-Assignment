@@ -1,9 +1,9 @@
+using DriveNow.Application.Receipts;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
-using DriveNow.Application.Receipts;
 using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
@@ -17,6 +17,9 @@ public class ReturnService
     readonly CustomerRepo _customers = new();
     readonly PaymentGateway _payments = new();
     readonly EmailSender _email = new();
+    readonly TimeProvider _time;
+
+    public ReturnService(TimeProvider time) => _time = time;
 
     public ReturnReport ProcessReturn(int bookingId, int endMileage, int fuelQuarters, decimal damageCost)
     {
@@ -34,7 +37,8 @@ public class ReturnService
         var customer = _customers.GetById(booking.CustomerId)
             ?? throw new CustomerNotFoundException($"Customer #{booking.CustomerId} not found");
 
-        var now = DateTime.Now;
+        // Same meaning as DateTime.Now: the local clock time.
+        var now = _time.GetLocalNow().DateTime;
         var report = BuildReport(booking, vehicle, endMileage, fuelQuarters, damageCost, now);
 
         booking.Status = BookingStatus.Completed;

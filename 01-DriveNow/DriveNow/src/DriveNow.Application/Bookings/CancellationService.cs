@@ -15,14 +15,20 @@ public class CancellationService
     readonly PaymentGateway _payments = new();
     readonly SmsSender _sms = new();
     readonly EmailSender _email = new();
+    readonly TimeProvider _time;
+
+    public CancellationService(TimeProvider time) => _time = time;
 
     public decimal Cancel(int bookingId)
     {
+        // Read the clock once; same meaning as DateTime.Now (local time).
+        var now = _time.GetLocalNow().DateTime;
+
         var booking = _bookings.GetById(bookingId)
             ?? throw new BookingNotFoundException($"Booking #{bookingId} not found");
         if (booking.Status != BookingStatus.Reserved)
             throw new InvalidBookingStateException("Only reserved bookings can be cancelled");
-        if (DateTime.Now >= booking.PickupAt)
+        if (now >= booking.PickupAt)
             throw new InvalidBookingStateException("Booking has already started");
 
         var vehicle = _vehicles.GetById(booking.VehicleId)
@@ -30,7 +36,7 @@ public class CancellationService
         var customer = _customers.GetById(booking.CustomerId)
             ?? throw new CustomerNotFoundException($"Customer #{booking.CustomerId} not found");
 
-        var hours = (booking.PickupAt - DateTime.Now).TotalHours;
+        var hours = (booking.PickupAt - now).TotalHours;
         var fee = 0m;
         if (customer.LoyaltyTier != LoyaltyTier.Platinum)
         {
