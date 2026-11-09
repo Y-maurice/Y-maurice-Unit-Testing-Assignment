@@ -12,7 +12,7 @@ namespace DriveNow.Application.Services;
 
 public class BookingService
 {
-    readonly CustomerRepo _customers = new();
+    readonly CustomerRepository _customers = new();
     readonly VehicleRepository _vehicles = new();
     readonly BookingRepository _bookings = new();
     readonly PromoCodeRepository _promos = new();

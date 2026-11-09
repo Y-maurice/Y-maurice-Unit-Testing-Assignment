@@ -15,7 +15,7 @@ namespace DriveNow.ConsoleApp;
 
 internal static class Program
 {
-    static readonly CustomerRepo Customers = new();
+    static readonly CustomerRepository Customers = new();
     static readonly VehicleRepository Vehicles = new();
     static readonly BookingRepository Bookings = new();
     static readonly PricingService Pricing = new(TimeProvider.System);
