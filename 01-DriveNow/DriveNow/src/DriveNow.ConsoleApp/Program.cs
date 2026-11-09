@@ -1,5 +1,4 @@
-﻿using DriveNow.Application.Bookings;
-using DriveNow.Application.Models;
+﻿using DriveNow.Application.Models;
 using DriveNow.Application.Receipts;
 using DriveNow.Application.Services;
 using DriveNow.Domain.Enums;

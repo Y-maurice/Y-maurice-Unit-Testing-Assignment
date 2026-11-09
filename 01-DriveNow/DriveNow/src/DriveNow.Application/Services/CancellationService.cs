@@ -4,7 +4,7 @@ using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
 
-namespace DriveNow.Application.Bookings;
+namespace DriveNow.Application.Services;
 
 public class CancellationService
 {
