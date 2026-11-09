@@ -15,10 +15,20 @@ public class BookingService
     readonly VehicleRepository _vehicles = new();
     readonly BookingRepository _bookings = new();
     readonly PromoCodeRepository _promos = new();
-    readonly PricingService _pricing = new();
+    readonly PricingService _pricing;
     readonly PaymentGateway _payments = new();
     readonly SmsSender _sms = new();
     readonly EmailSender _email = new();
+    readonly TimeProvider _time;
+
+    public BookingService(TimeProvider time)
+    {
+        _time = time;
+        _pricing = new PricingService(time);
+    }
+
+    // Same meaning as DateTime.Now: the local clock time.
+    DateTime Now => _time.GetLocalNow().DateTime;
 
     public Booking CreateBooking(BookingRequest request)
     {
@@ -53,7 +63,7 @@ public class BookingService
             PromoCode = request.PromoCode,
             Price = price,
             Status = BookingStatus.Reserved,
-            CreatedAt = DateTime.Now,
+            CreatedAt = Now,
             StartMileage = vehicle.Mileage,
             Reference = "DN-" + request.PickupAt.ToString("yyyyMMdd") + "-" + RandomCode()
         };
@@ -86,7 +96,7 @@ public class BookingService
             ?? throw new BookingNotFoundException($"Booking #{bookingId} not found");
         if (booking.Status != BookingStatus.Reserved)
             throw new InvalidBookingStateException("Only reserved bookings can be started");
-        if (DateTime.Now < booking.PickupAt.AddHours(-1))
+        if (Now < booking.PickupAt.AddHours(-1))
             throw new InvalidBookingStateException("Too early to start this rental");
 
         booking.Status = BookingStatus.Active;
@@ -111,7 +121,8 @@ public class BookingService
             throw new BookingRejectedException("License must be held for at least 1 year");
     }
 
-    static void RejectVehicle(Vehicle vehicle, int age, int licenseYears, BookingRequest request)
+    // No longer static: it reads the clock through Now.
+    void RejectVehicle(Vehicle vehicle, int age, int licenseYears, BookingRequest request)
     {
         if (!vehicle.IsAvailable)
             throw new BookingRejectedException("Vehicle is not available");
@@ -122,7 +133,7 @@ public class BookingService
         if (vehicle.Category == VehicleCategory.Van && licenseYears < 2)
             throw new BookingRejectedException("Vans require 2 years of license");
 
-        if (request.PickupAt < DateTime.Now.AddHours(2))
+        if (request.PickupAt < Now.AddHours(2))
             throw new BookingRejectedException("Pickup must be at least 2 hours from now");
 
         if (request.ReturnAt <= request.PickupAt || request.ReturnAt - request.PickupAt > TimeSpan.FromDays(30))
