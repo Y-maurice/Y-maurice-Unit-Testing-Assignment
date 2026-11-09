@@ -1,3 +1,5 @@
+using DriveNow.Domain.Exceptions;
+
 namespace DriveNow.Infrastructure.External;
 
 public class PaymentGateway

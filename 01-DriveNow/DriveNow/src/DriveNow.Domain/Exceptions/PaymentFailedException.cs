@@ -1,4 +1,4 @@
-namespace DriveNow.Infrastructure.External;
+namespace DriveNow.Domain.Exceptions;
 
 public class PaymentFailedException : Exception
 {

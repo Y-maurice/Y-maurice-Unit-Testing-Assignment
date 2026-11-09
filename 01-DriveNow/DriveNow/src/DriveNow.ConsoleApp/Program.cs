@@ -6,7 +6,6 @@ using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
-using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Generators;
 using DriveNow.Infrastructure.Repositories;
 using System.Globalization;
