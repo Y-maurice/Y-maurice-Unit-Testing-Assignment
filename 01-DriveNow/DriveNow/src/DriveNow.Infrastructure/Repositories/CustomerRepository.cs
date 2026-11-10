@@ -6,15 +6,19 @@ namespace DriveNow.Infrastructure.Repositories;
 
 public class CustomerRepository : ICustomerRepository
 {
-    public Customer? GetById(int id) =>
-        InMemoryDatabase.Customers.FirstOrDefault(customer => customer.Id == id);
+    readonly InMemoryDatabase _database;
 
-    public List<Customer> GetAll() => InMemoryDatabase.Customers.ToList();
+    public CustomerRepository(InMemoryDatabase database) => _database = database;
+
+    public Customer? GetById(int id) =>
+        _database.Customers.FirstOrDefault(customer => customer.Id == id);
+
+    public List<Customer> GetAll() => _database.Customers.ToList();
 
     public void Update(Customer customer)
     {
-        var index = InMemoryDatabase.Customers.FindIndex(item => item.Id == customer.Id);
+        var index = _database.Customers.FindIndex(item => item.Id == customer.Id);
         if (index >= 0)
-            InMemoryDatabase.Customers[index] = customer;
+            _database.Customers[index] = customer;
     }
 }

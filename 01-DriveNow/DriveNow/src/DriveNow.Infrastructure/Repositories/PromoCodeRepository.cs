@@ -6,15 +6,19 @@ namespace DriveNow.Infrastructure.Repositories;
 
 public class PromoCodeRepository : IPromoCodeRepository
 {
+    readonly InMemoryDatabase _database;
+
+    public PromoCodeRepository(InMemoryDatabase database) => _database = database;
+
     public PromoCode? GetByCode(string code) =>
-        InMemoryDatabase.PromoCodes.FirstOrDefault(promo =>
+        _database.PromoCodes.FirstOrDefault(promo =>
             string.Equals(promo.Code, code, StringComparison.OrdinalIgnoreCase));
 
     public void Update(PromoCode promo)
     {
-        var index = InMemoryDatabase.PromoCodes.FindIndex(item =>
+        var index = _database.PromoCodes.FindIndex(item =>
             string.Equals(item.Code, promo.Code, StringComparison.OrdinalIgnoreCase));
         if (index >= 0)
-            InMemoryDatabase.PromoCodes[index] = promo;
+            _database.PromoCodes[index] = promo;
     }
 }

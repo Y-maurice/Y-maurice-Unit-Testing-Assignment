@@ -7,31 +7,35 @@ namespace DriveNow.Infrastructure.Repositories;
 
 public class BookingRepository : IBookingRepository
 {
-    public Booking? GetById(int id) =>
-        InMemoryDatabase.Bookings.FirstOrDefault(booking => booking.Id == id);
+    readonly InMemoryDatabase _database;
 
-    public List<Booking> GetAll() => InMemoryDatabase.Bookings.ToList();
+    public BookingRepository(InMemoryDatabase database) => _database = database;
+
+    public Booking? GetById(int id) =>
+        _database.Bookings.FirstOrDefault(booking => booking.Id == id);
+
+    public List<Booking> GetAll() => _database.Bookings.ToList();
 
     public void Add(Booking booking)
     {
-        booking.Id = InMemoryDatabase.NextBookingId++;
-        InMemoryDatabase.Bookings.Add(booking);
+        booking.Id = _database.NextBookingId++;
+        _database.Bookings.Add(booking);
     }
 
     public void Update(Booking booking)
     {
-        var index = InMemoryDatabase.Bookings.FindIndex(item => item.Id == booking.Id);
+        var index = _database.Bookings.FindIndex(item => item.Id == booking.Id);
         if (index >= 0)
-            InMemoryDatabase.Bookings[index] = booking;
+            _database.Bookings[index] = booking;
     }
 
     public List<Booking> GetOpenBookingsForVehicle(int vehicleId) =>
-        InMemoryDatabase.Bookings
+        _database.Bookings
             .Where(booking => booking.VehicleId == vehicleId
                 && booking.Status is BookingStatus.Reserved or BookingStatus.Active)
             .ToList();
 
     public int CountOpenBookingsForCustomer(int customerId) =>
-        InMemoryDatabase.Bookings.Count(booking => booking.CustomerId == customerId
+        _database.Bookings.Count(booking => booking.CustomerId == customerId
             && booking.Status is BookingStatus.Reserved or BookingStatus.Active);
 }

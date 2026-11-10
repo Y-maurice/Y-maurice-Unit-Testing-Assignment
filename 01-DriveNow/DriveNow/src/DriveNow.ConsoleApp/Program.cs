@@ -9,6 +9,7 @@ using DriveNow.Domain.ValueObjects;
 using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Generators;
 using DriveNow.Infrastructure.Logging;
+using DriveNow.Infrastructure.Persistence;
 using DriveNow.Infrastructure.Repositories;
 using System.Globalization;
 
@@ -16,10 +17,12 @@ namespace DriveNow.ConsoleApp;
 
 internal static class Program
 {
-    static readonly ICustomerRepository Customers = new CustomerRepository();
-    static readonly IVehicleRepository Vehicles = new VehicleRepository();
-    static readonly IBookingRepository Bookings = new BookingRepository();
-    static readonly IPromoCodeRepository Promos = new PromoCodeRepository();
+    static readonly InMemoryDatabase Database = new(TimeProvider.System);
+
+    static readonly ICustomerRepository Customers = new CustomerRepository(Database);
+    static readonly IVehicleRepository Vehicles = new VehicleRepository(Database);
+    static readonly IBookingRepository Bookings = new BookingRepository(Database);
+    static readonly IPromoCodeRepository Promos = new PromoCodeRepository(Database);
     static readonly IPaymentGateway Payments = new PaymentGateway();
     static readonly ISmsSender Sms = new SmsSender();
     static readonly IEmailSender Email = new EmailSender(TimeProvider.System);

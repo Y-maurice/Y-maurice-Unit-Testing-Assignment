@@ -4,26 +4,33 @@ using DriveNow.Domain.ValueObjects;
 
 namespace DriveNow.Infrastructure.Persistence;
 
-public static class InMemoryDatabase
+/// <summary>
+/// The in-memory data store. It is an ordinary object now: every test (or the console)
+/// creates its own instance, seeded relative to the date the clock gives it
+/// </summary>
+public class InMemoryDatabase
 {
-    public static List<Customer> Customers = [];
-    public static List<Vehicle> Vehicles = [];
-    public static List<PromoCode> PromoCodes = [];
-    public static List<Booking> Bookings = [];
-    public static int NextBookingId = 3;
+    public List<Customer> Customers { get; }
+    public List<Vehicle> Vehicles { get; }
+    public List<PromoCode> PromoCodes { get; }
+    public List<Booking> Bookings { get; }
+    public int NextBookingId { get; set; } = 3;
 
-    static InMemoryDatabase()
+    public InMemoryDatabase(TimeProvider time)
     {
+        // Same meaning as DateTime.Today: the local date at midnight.
+        var today = time.GetLocalNow().Date;
+
         Customers =
         [
-            Customer(1, "Ahmed Fawzy", DateTime.Today.AddYears(-34), DateTime.Today.AddYears(-12), LoyaltyTier.Gold, 18, false),
-            Customer(2, "Mariam Adel", DateTime.Today.AddYears(-23), DateTime.Today.AddYears(-3), LoyaltyTier.None, 2, false),
-            Customer(3, "Khaled Mostafa", DateTime.Today.AddYears(-25).AddDays(-10), DateTime.Today.AddYears(-4), LoyaltyTier.Silver, 7, false),
-            Customer(4, "Salma Hany", DateTime.Today.AddYears(-21).AddDays(-3), DateTime.Today.AddYears(-1).AddDays(-5), LoyaltyTier.None, 0, false),
-            Customer(5, "Tamer Nabil", DateTime.Today.AddYears(-40), DateTime.Today.AddYears(-20), LoyaltyTier.Platinum, 35, false),
-            Customer(6, "Rana Sherif", DateTime.Today.AddYears(-29), DateTime.Today.AddYears(-2), LoyaltyTier.Silver, 6, true),
-            Customer(7, "Omar Wael", DateTime.Today.AddYears(-20), DateTime.Today.AddYears(-1), LoyaltyTier.None, 0, false),
-            Customer(8, "Youssef Kamal", DateTime.Today.AddYears(-27), DateTime.Today.AddMonths(-6), LoyaltyTier.None, 0, false)
+            Customer(1, "Ahmed Fawzy", today.AddYears(-34), today.AddYears(-12), LoyaltyTier.Gold, 18, false),
+            Customer(2, "Mariam Adel", today.AddYears(-23), today.AddYears(-3), LoyaltyTier.None, 2, false),
+            Customer(3, "Khaled Mostafa", today.AddYears(-25).AddDays(-10), today.AddYears(-4), LoyaltyTier.Silver, 7, false),
+            Customer(4, "Salma Hany", today.AddYears(-21).AddDays(-3), today.AddYears(-1).AddDays(-5), LoyaltyTier.None, 0, false),
+            Customer(5, "Tamer Nabil", today.AddYears(-40), today.AddYears(-20), LoyaltyTier.Platinum, 35, false),
+            Customer(6, "Rana Sherif", today.AddYears(-29), today.AddYears(-2), LoyaltyTier.Silver, 6, true),
+            Customer(7, "Omar Wael", today.AddYears(-20), today.AddYears(-1), LoyaltyTier.None, 0, false),
+            Customer(8, "Youssef Kamal", today.AddYears(-27), today.AddMonths(-6), LoyaltyTier.None, 0, false)
         ];
 
         Vehicles =
@@ -46,8 +53,8 @@ public static class InMemoryDatabase
             {
                 Code = "SAVE15",
                 DiscountPercent = 15,
-                ValidFrom = DateTime.Today.AddDays(-10),
-                ValidUntil = DateTime.Today.AddDays(60),
+                ValidFrom = today.AddDays(-10),
+                ValidUntil = today.AddDays(60),
                 MinDays = 1,
                 AllowedCategories = null,
                 MaxUses = 100,
@@ -57,8 +64,8 @@ public static class InMemoryDatabase
             {
                 Code = "WEEKLY20",
                 DiscountPercent = 20,
-                ValidFrom = DateTime.Today.AddDays(-5),
-                ValidUntil = DateTime.Today.AddDays(90),
+                ValidFrom = today.AddDays(-5),
+                ValidUntil = today.AddDays(90),
                 MinDays = 7,
                 AllowedCategories = null,
                 MaxUses = 50,
@@ -68,8 +75,8 @@ public static class InMemoryDatabase
             {
                 Code = "LUX10",
                 DiscountPercent = 10,
-                ValidFrom = DateTime.Today.AddDays(-30),
-                ValidUntil = DateTime.Today.AddDays(30),
+                ValidFrom = today.AddDays(-30),
+                ValidUntil = today.AddDays(30),
                 MinDays = 2,
                 AllowedCategories = [VehicleCategory.Luxury],
                 MaxUses = 20,
@@ -79,8 +86,8 @@ public static class InMemoryDatabase
             {
                 Code = "SUMMER25",
                 DiscountPercent = 25,
-                ValidFrom = DateTime.Today.AddDays(-120),
-                ValidUntil = DateTime.Today.AddDays(-30),
+                ValidFrom = today.AddDays(-120),
+                ValidUntil = today.AddDays(-30),
                 MinDays = 1,
                 AllowedCategories = null,
                 MaxUses = 100,
@@ -96,15 +103,15 @@ public static class InMemoryDatabase
                 Reference = "DN-SEED-0001",
                 CustomerId = 1,
                 VehicleId = 5,
-                PickupAt = DateTime.Today.AddDays(3).AddHours(10),
-                ReturnAt = DateTime.Today.AddDays(6).AddHours(10),
+                PickupAt = today.AddDays(3).AddHours(10),
+                ReturnAt = today.AddDays(6).AddHours(10),
                 InsurancePlan = InsurancePlan.Standard,
                 AdditionalDrivers = 0,
                 PromoCode = null,
                 Price = new PriceBreakdown(),
                 Deposit = 2500m,
                 Status = BookingStatus.Reserved,
-                CreatedAt = DateTime.Today.AddDays(-7),
+                CreatedAt = today.AddDays(-7),
                 StartMileage = 25000
             },
             new Booking
@@ -113,15 +120,15 @@ public static class InMemoryDatabase
                 Reference = "DN-SEED-0002",
                 CustomerId = 5,
                 VehicleId = 7,
-                PickupAt = DateTime.Today.AddDays(-2).AddHours(9),
-                ReturnAt = DateTime.Today.AddDays(1).AddHours(9),
+                PickupAt = today.AddDays(-2).AddHours(9),
+                ReturnAt = today.AddDays(1).AddHours(9),
                 InsurancePlan = InsurancePlan.Standard,
                 AdditionalDrivers = 0,
                 PromoCode = null,
                 Price = new PriceBreakdown(),
                 Deposit = 0m,
                 Status = BookingStatus.Active,
-                CreatedAt = DateTime.Today.AddDays(-7),
+                CreatedAt = today.AddDays(-7),
                 StartMileage = 9000
             }
         ];
@@ -159,13 +166,13 @@ public static class InMemoryDatabase
         decimal dailyRate,
         int mileage,
         bool isAvailable) => new()
-    {
-        Id = id,
-        PlateNumber = plate,
-        Model = model,
-        Category = category,
-        DailyRate = dailyRate,
-        Mileage = mileage,
-        IsAvailable = isAvailable
-    };
+        {
+            Id = id,
+            PlateNumber = plate,
+            Model = model,
+            Category = category,
+            DailyRate = dailyRate,
+            Mileage = mileage,
+            IsAvailable = isAvailable
+        };
 }
