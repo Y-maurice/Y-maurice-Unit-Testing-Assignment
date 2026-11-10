@@ -1,4 +1,3 @@
-using DriveNow.Application.Receipts;
 using DriveNow.Domain.Abstractions;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
@@ -10,6 +9,7 @@ namespace DriveNow.Application.Services;
 
 public class ReturnService
 {
+    readonly ReceiptService _receipts;
     readonly IBookingRepository _bookings;
     readonly IVehicleRepository _vehicles;
     readonly ICustomerRepository _customers;
@@ -25,7 +25,8 @@ public class ReturnService
         IAuditLog audit,
         IBookingRepository bookings,
         IVehicleRepository vehicles,
-        ICustomerRepository customers)
+        ICustomerRepository customers,
+        ReceiptService receipts)
     {
         _time = time;
         _payments = payments;
@@ -34,6 +35,7 @@ public class ReturnService
         _bookings = bookings;
         _vehicles = vehicles;
         _customers = customers;
+        _receipts = receipts;
     }
 
     public ReturnReport ProcessReturn(int bookingId, int endMileage, int fuelQuarters, decimal damageCost)
@@ -73,12 +75,7 @@ public class ReturnService
             _payments.Charge(customer.Id, report.TotalExtra, $"Extras {booking.Reference}");
         if (booking.Deposit > 0)
             _payments.Refund(customer.Id, booking.Deposit, $"Deposit refund {booking.Reference}");
-
-        var receipt = new ReceiptService(
-            new LineItemFactory(),
-            new TaxCalculator(),
-            new CurrencyFormatter(),
-            new ReceiptFormatter()).Build(booking, report);
+        var receipt = _receipts.Build(booking, report);
         _email.Send(customer.Email, $"Receipt {booking.Reference}", receipt);
         _audit.Write($"Booking {booking.Reference} returned");
         return report;

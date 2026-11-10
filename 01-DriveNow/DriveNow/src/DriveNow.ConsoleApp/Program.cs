@@ -28,8 +28,9 @@ internal static class Program
     static readonly IEmailSender Email = new EmailSender(TimeProvider.System);
     static readonly IAuditLog Audit = new AuditLog(TimeProvider.System);
     static readonly PricingService Pricing = new(TimeProvider.System, Promos);
+    static readonly ReceiptService Receipts = new(new LineItemFactory(), new TaxCalculator(), new CurrencyFormatter(), new ReceiptFormatter());
+    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments, Email, Audit, Bookings, Vehicles, Customers, Receipts);
     static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms, Email, Audit, Customers, Vehicles, Bookings, Promos, Pricing);
-    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments, Email, Audit, Bookings, Vehicles, Customers);
     static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms, Email, Audit, Bookings, Vehicles, Customers, Promos);
     static void Main()
     {
