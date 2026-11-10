@@ -4,34 +4,47 @@ using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
-using DriveNow.Infrastructure.Repositories;
 
 namespace DriveNow.Application.Services;
 
 public class BookingService
 {
-    readonly CustomerRepository _customers = new();
-    readonly VehicleRepository _vehicles = new();
-    readonly BookingRepository _bookings = new();
-    readonly PromoCodeRepository _promos = new();
+    readonly ICustomerRepository _customers;
+    readonly IVehicleRepository _vehicles;
+    readonly IBookingRepository _bookings;
+    readonly IPromoCodeRepository _promos;
     readonly PricingService _pricing;
+    readonly IPaymentGateway _payments;
     readonly ISmsSender _sms;
     readonly IEmailSender _email;
+    readonly IAuditLog _audit;
     readonly TimeProvider _time;
     readonly IReferenceGenerator _references;
-    readonly IPaymentGateway _payments;
-    readonly IAuditLog _audit;
 
-
-    public BookingService(TimeProvider time, IReferenceGenerator references, IPaymentGateway payments, ISmsSender sms, IEmailSender emailSender, IAuditLog audit)
+    public BookingService(
+        TimeProvider time,
+        IReferenceGenerator references,
+        IPaymentGateway payments,
+        ISmsSender sms,
+        IEmailSender email,
+        IAuditLog audit,
+        ICustomerRepository customers,
+        IVehicleRepository vehicles,
+        IBookingRepository bookings,
+        IPromoCodeRepository promos,
+        PricingService pricing)
     {
         _time = time;
         _references = references;
         _payments = payments;
-        _pricing = new PricingService(time);
         _sms = sms;
-        _email = emailSender;
+        _email = email;
         _audit = audit;
+        _customers = customers;
+        _vehicles = vehicles;
+        _bookings = bookings;
+        _promos = promos;
+        _pricing = pricing;
     }
 
     // Same meaning as DateTime.Now: the local clock time.

@@ -1,29 +1,41 @@
 using DriveNow.Domain.Abstractions;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
-using DriveNow.Infrastructure.Repositories;
 
 namespace DriveNow.Application.Services;
 
 public class CancellationService
 {
-    readonly BookingRepository _bookings = new();
-    readonly VehicleRepository _vehicles = new();
-    readonly CustomerRepository _customers = new();
-    readonly PromoCodeRepository _promos = new();
+    readonly IBookingRepository _bookings;
+    readonly IVehicleRepository _vehicles;
+    readonly ICustomerRepository _customers;
+    readonly IPromoCodeRepository _promos;
     readonly IPaymentGateway _payments;
     readonly ISmsSender _sms;
     readonly IEmailSender _email;
-    readonly TimeProvider _time;
     readonly IAuditLog _audit;
+    readonly TimeProvider _time;
 
-    public CancellationService(TimeProvider time, IPaymentGateway payments, ISmsSender sms, IEmailSender emailSender, IAuditLog audit)
+    public CancellationService(
+        TimeProvider time,
+        IPaymentGateway payments,
+        ISmsSender sms,
+        IEmailSender email,
+        IAuditLog audit,
+        IBookingRepository bookings,
+        IVehicleRepository vehicles,
+        ICustomerRepository customers,
+        IPromoCodeRepository promos)
     {
         _time = time;
         _payments = payments;
         _sms = sms;
-        _email = emailSender;
+        _email = email;
         _audit = audit;
+        _bookings = bookings;
+        _vehicles = vehicles;
+        _customers = customers;
+        _promos = promos;
     }
 
     public decimal Cancel(int bookingId)

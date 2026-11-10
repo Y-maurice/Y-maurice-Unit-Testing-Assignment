@@ -16,21 +16,18 @@ namespace DriveNow.ConsoleApp;
 
 internal static class Program
 {
+    static readonly ICustomerRepository Customers = new CustomerRepository();
+    static readonly IVehicleRepository Vehicles = new VehicleRepository();
+    static readonly IBookingRepository Bookings = new BookingRepository();
+    static readonly IPromoCodeRepository Promos = new PromoCodeRepository();
     static readonly IPaymentGateway Payments = new PaymentGateway();
     static readonly ISmsSender Sms = new SmsSender();
     static readonly IEmailSender Email = new EmailSender(TimeProvider.System);
     static readonly IAuditLog Audit = new AuditLog(TimeProvider.System);
-
-
-
-
-    static readonly CustomerRepository Customers = new();
-    static readonly VehicleRepository Vehicles = new();
-    static readonly BookingRepository Bookings = new();
-    static readonly PricingService Pricing = new(TimeProvider.System);
-    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms, Email, Audit);
-    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments, Email, Audit);
-    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms, Email, Audit);
+    static readonly PricingService Pricing = new(TimeProvider.System, Promos);
+    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms, Email, Audit, Customers, Vehicles, Bookings, Promos, Pricing);
+    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments, Email, Audit, Bookings, Vehicles, Customers);
+    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms, Email, Audit, Bookings, Vehicles, Customers, Promos);
     static void Main()
     {
         PriceSeedBookings();

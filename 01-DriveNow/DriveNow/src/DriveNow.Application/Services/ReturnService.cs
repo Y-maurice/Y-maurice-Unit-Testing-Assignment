@@ -5,26 +5,35 @@ using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
-using DriveNow.Infrastructure.Repositories;
 
 namespace DriveNow.Application.Services;
 
 public class ReturnService
 {
-    readonly BookingRepository _bookings = new();
-    readonly VehicleRepository _vehicles = new();
-    readonly CustomerRepository _customers = new();
+    readonly IBookingRepository _bookings;
+    readonly IVehicleRepository _vehicles;
+    readonly ICustomerRepository _customers;
     readonly IPaymentGateway _payments;
     readonly IEmailSender _email;
-    readonly TimeProvider _time;
     readonly IAuditLog _audit;
+    readonly TimeProvider _time;
 
-    public ReturnService(TimeProvider time, IPaymentGateway payments, IEmailSender emailSender, IAuditLog audit)
+    public ReturnService(
+        TimeProvider time,
+        IPaymentGateway payments,
+        IEmailSender email,
+        IAuditLog audit,
+        IBookingRepository bookings,
+        IVehicleRepository vehicles,
+        ICustomerRepository customers)
     {
         _time = time;
         _payments = payments;
-        _email = emailSender;
+        _email = email;
         _audit = audit;
+        _bookings = bookings;
+        _vehicles = vehicles;
+        _customers = customers;
     }
 
     public ReturnReport ProcessReturn(int bookingId, int endMileage, int fuelQuarters, decimal damageCost)
