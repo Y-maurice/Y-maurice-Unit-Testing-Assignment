@@ -25,21 +25,26 @@
 
 ## Task 4: how each failure was resolved
 
-After the renames, the moves and the interfaces for the external services, `dotnet test` shows 43 tests with 2 failures: the known `RentalMath` 1500-minute case and rule R2. The 5 legacy tests still pass, and the console output is unchanged (compared on the same day).
+After Task 4, `dotnet test` shows 43 tests with 1 failure: the known `RentalMath` 1500-minute case from Task 1, a bug candidate for Task 10. **All 11 architecture tests pass.** The 5 legacy tests still pass, and the console output is unchanged (compared on the same day).
 
 | # | Failure | Resolution |
 | --- | --- | --- |
+| 1 | R2: `Application` references `Infrastructure` | Resolved in two stages. First the payment gateway, SMS sender, email sender and audit log reached the services through interfaces, which removed the `External` and `Logging` imports. Then the repositories did too (`refactor: inject repositories into the services`), so no Application type depends on Infrastructure any more, and I removed the project reference from `DriveNow.Application.csproj`. |
 | 2 | `CustomerRepo` | Renamed to `CustomerRepository` (class, file, and its uses in the services and in `Program.cs`). Commit `refactor: rename CustomerRepo to CustomerRepository`. |
-| 3 | `PaymentFailedException` in Infrastructure | Moved to the Domain project, namespace `DriveNow.Domain.Exceptions`. `PaymentGateway` and `ConsoleApp` import it from Domain, and the services already imported `DriveNow.Domain.Exceptions`, so Application can now know the exception without referencing Infrastructure. Commit `refactor: move PaymentFailedException to Domain.Exceptions`. |
+| 3 | `PaymentFailedException` in Infrastructure | Moved to the Domain project, namespace `DriveNow.Domain.Exceptions`. `PaymentGateway` and `ConsoleApp` import it from Domain, and the services already imported `DriveNow.Domain.Exceptions`, so Application knows the exception without referencing Infrastructure. Commit `refactor: move PaymentFailedException to Domain.Exceptions`. |
 | 4 | `CancellationService` and `ReceiptService` outside `Services` | Both moved to the `DriveNow.Application.Services` namespace. `ReceiptService` keeps using the interfaces that stay in `Application.Receipts`. Commits `refactor: move CancellationService to the Services namespace` and `refactor: move ReceiptService to the Services namespace`. |
 | 5 | `RentalMath` name | The extra check was removed (see row 5 above), so the architecture suite has 11 tests. |
-| 1 | R2: `Application` references `Infrastructure` | **Still open, but smaller.** The payment gateway, the SMS sender, the email sender and the audit log now reach the services through interfaces, so the services no longer import `Infrastructure.External` or `Infrastructure.Logging`. What is left is the `Infrastructure.Repositories` namespace: the four services still create `CustomerRepository`, `VehicleRepository`, `BookingRepository` and `PromoCodeRepository` themselves. It is cleared by the last step: the data store as an instance, with repository interfaces. |
 
-## Task 4: where the new interfaces live
+## Task 4: where the new interfaces live (R3)
 
 All the new interfaces are in the Domain project, namespace `DriveNow.Domain.Abstractions`, and their real implementations stay in Infrastructure.
 
-**Why Domain and not Application:** `Application` references `Infrastructure` (which is row 1 of the table above), while `Infrastructure` does not reference `Application`. An interface in `Application` would force `Infrastructure` to reference `Application` to implement it, which is a circular project reference that does not build. `Domain` is referenced by both, these interfaces only use primitive types, `DateTime` and Domain types, and rule R1 (Domain depends on no other DriveNow project) still holds.
+**Why Domain and not Application:**
+
+- While I was refactoring, `Application` still referenced `Infrastructure` (row 1), and `Infrastructure` did not reference `Application`. An interface in `Application` would have forced `Infrastructure` to reference `Application` to implement it, which is a circular project reference that does not build. `Domain` is referenced by both.
+- The repository interfaces return Domain entities (`Booking`, `Customer`, `Vehicle`, `PromoCode`), so they belong next to them. The other interfaces only use primitive types, `DateTime` and Domain types.
+- Rule R1 (Domain depends on no other DriveNow project) still holds, because the interfaces only mention Domain types.
+- Now that `Application` no longer references `Infrastructure`, the interfaces could live in either project. I kept them in Domain so `Infrastructure` only depends on `Domain` and never needs a reference to `Application`.
 
 | Interface | Real implementation | Used by | Why it matters for testing |
 | --- | --- | --- | --- |
@@ -48,5 +53,11 @@ All the new interfaces are in the Domain project, namespace `DriveNow.Domain.Abs
 | `ISmsSender` | `Infrastructure.External.SmsSender` | `BookingService`, `CancellationService` | A spy records the messages instead of waiting 0.5 s and printing to the console. |
 | `IEmailSender` | `Infrastructure.External.EmailSender` | `BookingService`, `ReturnService`, `CancellationService` | A spy records the emails instead of writing files to the `outbox` folder. The real sender receives the clock for its file names. |
 | `IAuditLog` | `Infrastructure.Logging.AuditLog` (no longer static) | `BookingService`, `ReturnService`, `CancellationService` | A list in memory replaces the `audit.log` file, and a test can assert what was logged. The real log receives the clock and prints the same timestamp format as before. |
+| `IBookingRepository` | `Infrastructure.Repositories.BookingRepository` | `BookingService`, `ReturnService`, `CancellationService` | A test gives the service a repository with exactly the bookings it needs (for example an overlapping one for BR-21), without touching shared static state. |
+| `ICustomerRepository` | `Infrastructure.Repositories.CustomerRepository` | `BookingService`, `ReturnService`, `CancellationService` | A test creates the customers it needs (blacklisted, Platinum, young driver) instead of relying on the seed data. |
+| `IVehicleRepository` | `Infrastructure.Repositories.VehicleRepository` | `BookingService`, `ReturnService`, `CancellationService` | Same: a test creates the vehicle category and rate it needs. |
+| `IPromoCodeRepository` | `Infrastructure.Repositories.PromoCodeRepository` | `PricingService`, `BookingService`, `CancellationService` | A test creates promo codes with any dates, limits and categories for BR-36 and BR-37. |
 
-`ConsoleApp` is the composition root: it creates the real implementations by hand and passes them to the services' constructors (no DI container).
+`InMemoryDatabase` is now a normal class with a `TimeProvider` constructor, and the four repositories receive the instance. `ReturnService` receives a `ReceiptService` (a concrete class in Application that already depends on interfaces), so it needs no new interface.
+
+`ConsoleApp` is the composition root: it creates the database, the repositories, the real implementations and the services by hand and passes them through the constructors (no DI container). The dependency direction is now `ConsoleApp` → `Infrastructure` → `Domain` and `ConsoleApp` → `Application` → `Domain`.

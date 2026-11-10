@@ -17,6 +17,7 @@ namespace DriveNow.ConsoleApp;
 
 internal static class Program
 {
+    static readonly TimeProvider Clock = TimeProvider.System;
     static readonly InMemoryDatabase Database = new(TimeProvider.System);
 
     static readonly ICustomerRepository Customers = new CustomerRepository(Database);
@@ -108,7 +109,7 @@ internal static class Program
     {
         foreach (var customer in Customers.GetAll())
         {
-            var age = RentalMath.CalculateAge(customer.DateOfBirth, DateTime.Today);
+            var age = RentalMath.CalculateAge(customer.DateOfBirth, Clock.GetLocalNow().Date);
             Console.WriteLine(
                 $"{customer.Id,2}  {customer.FullName,-16} age {age,2}  {customer.LoyaltyTier,-10} rentals {customer.CompletedRentals,2}  {(customer.IsBlacklisted ? "blacklisted" : "clear")}");
         }
