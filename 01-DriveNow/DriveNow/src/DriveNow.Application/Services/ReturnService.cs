@@ -5,7 +5,6 @@ using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
-using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
 
@@ -17,13 +16,14 @@ public class ReturnService
     readonly VehicleRepository _vehicles = new();
     readonly CustomerRepository _customers = new();
     readonly IPaymentGateway _payments;
-    readonly EmailSender _email = new();
+    readonly IEmailSender _email;
     readonly TimeProvider _time;
 
-    public ReturnService(TimeProvider time, IPaymentGateway payments)
+    public ReturnService(TimeProvider time, IPaymentGateway payments, IEmailSender emailSender)
     {
         _time = time;
         _payments = payments;
+        _email = emailSender;
     }
 
     public ReturnReport ProcessReturn(int bookingId, int endMileage, int fuelQuarters, decimal damageCost)

@@ -4,7 +4,6 @@ using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
-using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
 
@@ -18,19 +17,20 @@ public class BookingService
     readonly PromoCodeRepository _promos = new();
     readonly PricingService _pricing;
     readonly ISmsSender _sms;
-    readonly EmailSender _email = new();
+    readonly IEmailSender _email;
     readonly TimeProvider _time;
     readonly IReferenceGenerator _references;
     readonly IPaymentGateway _payments;
 
 
-    public BookingService(TimeProvider time, IReferenceGenerator references, IPaymentGateway payments, ISmsSender sms)
+    public BookingService(TimeProvider time, IReferenceGenerator references, IPaymentGateway payments, ISmsSender sms, IEmailSender emailSender)
     {
         _time = time;
         _references = references;
         _payments = payments;
         _pricing = new PricingService(time);
         _sms = sms;
+        _email = emailSender;
     }
 
     // Same meaning as DateTime.Now: the local clock time.

@@ -17,15 +17,17 @@ internal static class Program
 {
     static readonly IPaymentGateway Payments = new PaymentGateway();
     static readonly ISmsSender Sms = new SmsSender();
+    static readonly IEmailSender Email = new EmailSender(TimeProvider.System);
+
 
 
     static readonly CustomerRepository Customers = new();
     static readonly VehicleRepository Vehicles = new();
     static readonly BookingRepository Bookings = new();
     static readonly PricingService Pricing = new(TimeProvider.System);
-    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms);
-    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments);
-    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms);
+    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms, Email);
+    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments, Email);
+    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms, Email);
     static void Main()
     {
         PriceSeedBookings();
