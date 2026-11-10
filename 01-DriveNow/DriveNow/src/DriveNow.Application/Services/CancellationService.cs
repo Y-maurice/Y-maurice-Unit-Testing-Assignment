@@ -1,7 +1,6 @@
 using DriveNow.Domain.Abstractions;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
-using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
 
 namespace DriveNow.Application.Services;
@@ -16,13 +15,15 @@ public class CancellationService
     readonly ISmsSender _sms;
     readonly IEmailSender _email;
     readonly TimeProvider _time;
+    readonly IAuditLog _audit;
 
-    public CancellationService(TimeProvider time, IPaymentGateway payments, ISmsSender sms, IEmailSender emailSender)
+    public CancellationService(TimeProvider time, IPaymentGateway payments, ISmsSender sms, IEmailSender emailSender, IAuditLog audit)
     {
         _time = time;
         _payments = payments;
         _sms = sms;
         _email = emailSender;
+        _audit = audit;
     }
 
     public decimal Cancel(int bookingId)
@@ -76,7 +77,7 @@ public class CancellationService
         var note = $"Booking {booking.Reference} cancelled";
         _sms.Send(customer.Phone, note);
         _email.Send(customer.Email, note, note);
-        AuditLog.Write(note);
+        _audit.Write(note);
         return fee;
     }
 

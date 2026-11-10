@@ -8,6 +8,7 @@ using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
 using DriveNow.Infrastructure.External;
 using DriveNow.Infrastructure.Generators;
+using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
 using System.Globalization;
 
@@ -18,6 +19,8 @@ internal static class Program
     static readonly IPaymentGateway Payments = new PaymentGateway();
     static readonly ISmsSender Sms = new SmsSender();
     static readonly IEmailSender Email = new EmailSender(TimeProvider.System);
+    static readonly IAuditLog Audit = new AuditLog(TimeProvider.System);
+
 
 
 
@@ -25,9 +28,9 @@ internal static class Program
     static readonly VehicleRepository Vehicles = new();
     static readonly BookingRepository Bookings = new();
     static readonly PricingService Pricing = new(TimeProvider.System);
-    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms, Email);
-    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments, Email);
-    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms, Email);
+    static readonly BookingService BookingService = new(TimeProvider.System, new RandomReferenceGenerator(), Payments, Sms, Email, Audit);
+    static readonly ReturnService ReturnService = new(TimeProvider.System, Payments, Email, Audit);
+    static readonly CancellationService CancellationService = new(TimeProvider.System, Payments, Sms, Email, Audit);
     static void Main()
     {
         PriceSeedBookings();

@@ -5,7 +5,6 @@ using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
-using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
 
 namespace DriveNow.Application.Services;
@@ -18,12 +17,14 @@ public class ReturnService
     readonly IPaymentGateway _payments;
     readonly IEmailSender _email;
     readonly TimeProvider _time;
+    readonly IAuditLog _audit;
 
-    public ReturnService(TimeProvider time, IPaymentGateway payments, IEmailSender emailSender)
+    public ReturnService(TimeProvider time, IPaymentGateway payments, IEmailSender emailSender, IAuditLog audit)
     {
         _time = time;
         _payments = payments;
         _email = emailSender;
+        _audit = audit;
     }
 
     public ReturnReport ProcessReturn(int bookingId, int endMileage, int fuelQuarters, decimal damageCost)
@@ -70,7 +71,7 @@ public class ReturnService
             new CurrencyFormatter(),
             new ReceiptFormatter()).Build(booking, report);
         _email.Send(customer.Email, $"Receipt {booking.Reference}", receipt);
-        AuditLog.Write($"Booking {booking.Reference} returned");
+        _audit.Write($"Booking {booking.Reference} returned");
         return report;
     }
 

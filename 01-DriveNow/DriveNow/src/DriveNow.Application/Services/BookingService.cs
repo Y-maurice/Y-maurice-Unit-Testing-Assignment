@@ -4,7 +4,6 @@ using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
-using DriveNow.Infrastructure.Logging;
 using DriveNow.Infrastructure.Repositories;
 
 namespace DriveNow.Application.Services;
@@ -21,9 +20,10 @@ public class BookingService
     readonly TimeProvider _time;
     readonly IReferenceGenerator _references;
     readonly IPaymentGateway _payments;
+    readonly IAuditLog _audit;
 
 
-    public BookingService(TimeProvider time, IReferenceGenerator references, IPaymentGateway payments, ISmsSender sms, IEmailSender emailSender)
+    public BookingService(TimeProvider time, IReferenceGenerator references, IPaymentGateway payments, ISmsSender sms, IEmailSender emailSender, IAuditLog audit)
     {
         _time = time;
         _references = references;
@@ -31,6 +31,7 @@ public class BookingService
         _pricing = new PricingService(time);
         _sms = sms;
         _email = emailSender;
+        _audit = audit;
     }
 
     // Same meaning as DateTime.Now: the local clock time.
@@ -92,7 +93,7 @@ public class BookingService
         var note = $"Booking {booking.Reference} confirmed";
         _sms.Send(customer.Phone, note);
         _email.Send(customer.Email, note, note);
-        AuditLog.Write($"Booking {booking.Reference} created");
+        _audit.Write($"Booking {booking.Reference} created");
         return booking;
     }
 
@@ -107,7 +108,7 @@ public class BookingService
 
         booking.Status = BookingStatus.Active;
         _bookings.Update(booking);
-        AuditLog.Write($"Booking {booking.Reference} started");
+        _audit.Write($"Booking {booking.Reference} started");
     }
 
     Customer RequireCustomer(int customerId)
