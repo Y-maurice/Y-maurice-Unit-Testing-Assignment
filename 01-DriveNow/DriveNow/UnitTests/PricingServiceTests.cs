@@ -7,6 +7,7 @@ using DriveNow.Domain.ValueObjects;
 using DriveNow.UnitTests.Support;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using System.Globalization;
 
 namespace DriveNow.UnitTests;
 
@@ -109,6 +110,8 @@ public class PricingServiceTests
     [InlineData(DayOfWeek.Saturday, 10, 3, 200)] // Sat, Sun, Mon
     [InlineData(DayOfWeek.Thursday, 23, 2, 200)] // day 2 starts Friday 23:00
     [InlineData(DayOfWeek.Saturday, 23, 2, 200)] // day 1 starts Saturday 23:00, day 2 Sunday 23:00
+    [InlineData(DayOfWeek.Thursday, 23, 1, 0)]   // the day starts Thursday 23:00, although it is mostly Friday
+    [InlineData(DayOfWeek.Friday, 23, 2, 400)]   // days start Friday 23:00 and Saturday 23:00
     public void Calculate_PickupWeekday_AddsWeekendSurcharge(
         DayOfWeek pickupDay, int pickupHour, int days, int expectedSurcharge)
     {
@@ -183,6 +186,21 @@ public class PricingServiceTests
         var price = Calculate(CustomerAged(30, pickup, tier), Car(1000m), pickup, pickup.AddDays(3)); // base = 3,000
 
         price.LoyaltyDiscount.Should().Be(expectedDiscount);
+    }
+
+
+    // The same rounding applies to the percentage amounts: 5% of 10.50 is 0.525.
+    [Fact]
+    [Trait("Rule", "BR-34")]
+    public void Calculate_HalfCentDiscount_RoundsAwayFromZero()
+    {
+        var pickup = NextWeekday(DayOfWeek.Monday);
+
+        var price = Calculate(
+            CustomerAged(30, pickup, LoyaltyTier.Silver), Car(10.50m), pickup, pickup.AddDays(1));
+
+        price.LoyaltyDiscount.Should().Be(0.53m);
+        price.Total.Should().Be(9.97m);
     }
 
     // =====================================================================
@@ -268,6 +286,24 @@ public class PricingServiceTests
             .Should().BeLessThanOrEqualTo(2500m);
     }
 
+
+    [Theory]
+    [Trait("Rule", "BR-37")]
+    [InlineData(3, LoyaltyTier.None, 30, 750)]     // the promo alone is above 25%: cut to 25% of 3,000
+    [InlineData(14, LoyaltyTier.Gold, 10, 0)]      // 15% + 10% already use the whole cap: the promo is cut to 0
+    [InlineData(14, LoyaltyTier.Silver, 10, 700)]  // 15% + 5% leave 5% of 14,000
+    public void Calculate_PromoAboveRemainingCap_CutsPromoToRemaining(
+    int days, LoyaltyTier tier, int promoPercent, int expectedPromo)
+    {
+        var pickup = NextWeekday(DayOfWeek.Monday);
+
+        var price = Calculate(
+            CustomerAged(30, pickup, tier), Car(1000m), pickup, pickup.AddDays(days),
+            promo: Promo(promoPercent), promoCode: "PROMO");
+
+        price.PromoDiscount.Should().Be(expectedPromo);
+    }
+
     // =====================================================================
     // BR-38: insurance per day: Basic 0, Standard 150, Premium 300; Luxury pays double.
     // 2 days.
@@ -331,16 +367,23 @@ public class PricingServiceTests
     // 10.125 is exactly half a cent: away from zero gives 10.13 (banker's rounding would give 10.12).
     // =====================================================================
 
-    [Fact]
+    [Theory]
     [Trait("Rule", "BR-30")]
-    public void Calculate_HalfCentRate_RoundsAwayFromZero()
+    [InlineData("10.124", "10.12")]  // below the half cent
+    [InlineData("10.125", "10.13")]  // exactly half a cent: away from zero (banker's rounding would give 10.12)
+    [InlineData("10.126", "10.13")]  // above the half cent
+    public void Calculate_HalfCentRate_RoundsAwayFromZero(string dailyRate, string expectedBase)
     {
         var pickup = NextWeekday(DayOfWeek.Monday);
 
-        var price = Calculate(CustomerAged(30, pickup), Car(10.125m), pickup, pickup.AddDays(1));
+        var price = Calculate(
+            CustomerAged(30, pickup),
+            Car(decimal.Parse(dailyRate, CultureInfo.InvariantCulture)),
+            pickup, pickup.AddDays(1));
 
-        price.BaseAmount.Should().Be(10.13m);
-        price.Total.Should().Be(10.13m);
+        var expected = decimal.Parse(expectedBase, CultureInfo.InvariantCulture);
+        price.BaseAmount.Should().Be(expected);
+        price.Total.Should().Be(expected);
     }
 
     // =====================================================================
@@ -481,6 +524,20 @@ public class PricingServiceTests
         var price = Run(scenario);
 
         price.Should().BeEquivalentTo(scenario.Expected);
+    }
+
+    [Theory]
+    [Trait("Rule", "BR-40")]
+    [MemberData(nameof(Scenarios))]
+    public void Calculate_Breakdown_TotalEqualsSumOfComponents(PricingScenario scenario)
+    {
+        var price = Run(scenario);
+
+        var sum = price.BaseAmount + price.WeekendSurcharge + price.YoungDriverSurcharge
+            - price.DurationDiscount - price.LoyaltyDiscount - price.PromoDiscount
+            + price.InsuranceCost + price.AdditionalDriversCost;
+
+        price.Total.Should().Be(sum);
     }
 
     // One AssertionScope: a single run reports EVERY wrong field of example B, not just the first.

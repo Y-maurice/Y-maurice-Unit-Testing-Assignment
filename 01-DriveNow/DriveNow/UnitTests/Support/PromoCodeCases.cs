@@ -198,5 +198,38 @@ public class PromoCodeCases : IEnumerable<object[]>
             RentalDays = 3,
             ExpectedError = "Promo code 'SAVE15' requires at least 7 days"
         };
+        yield return new PromoCase
+        {
+            Name = "Rental one day below the minimum",
+            Stored = Promo(minDays: 4),
+            TypedCode = "SAVE15",
+            RentalDays = 3,
+            ExpectedError = "Promo code 'SAVE15' requires at least 4 days"
+        };
+        yield return new PromoCase
+        {
+            Name = "Expired and too few days: the date check wins",
+            Stored = Promo(untilDays: -1, minDays: 7),
+            TypedCode = "SAVE15",
+            RentalDays = 3,
+            ExpectedError = "Promo code 'SAVE15' has expired"
+        };
+        yield return new PromoCase
+        {
+            Name = "Too few days and wrong category: the minimum-days check wins",
+            Stored = Promo(minDays: 7, allowed: [VehicleCategory.Luxury]),
+            TypedCode = "SAVE15",
+            RentalDays = 3,
+            Category = VehicleCategory.Economy,
+            ExpectedError = "Promo code 'SAVE15' requires at least 7 days"
+        };
+        yield return new PromoCase
+        {
+            Name = "Wrong category and fully used: the category check wins",
+            Stored = Promo(allowed: [VehicleCategory.Luxury], maxUses: 20, used: 20),
+            TypedCode = "SAVE15",
+            Category = VehicleCategory.Economy,
+            ExpectedError = "Promo code 'SAVE15' is not valid for Economy"
+        };
     }
 }
