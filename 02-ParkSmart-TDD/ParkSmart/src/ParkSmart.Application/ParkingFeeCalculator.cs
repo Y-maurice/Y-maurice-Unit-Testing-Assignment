@@ -13,6 +13,7 @@ public class ParkingFeeCalculator
             return 0m;
         }
 
-        return 10m;
+        var hours = Math.Ceiling(duration.TotalHours);
+        return (decimal)hours * 10m;
     }
 }
