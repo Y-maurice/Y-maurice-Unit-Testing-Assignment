@@ -18,6 +18,11 @@ public class ParkingFeeCalculator
             return 0m;
         }
 
+        return CalculateBaseFee(duration);
+    }
+
+    private decimal CalculateBaseFee(TimeSpan duration)
+    {
         var totalHours = (int)Math.Ceiling(duration.TotalHours);
 
         var fullDays = totalHours / 24;
@@ -25,7 +30,6 @@ public class ParkingFeeCalculator
 
         var fee = (fullDays * 80m) + (remainingHours * 10m);
 
-        // Cap the total if there are no full days (e.g., 10 hours)
         if (fullDays == 0 && fee > 80m)
         {
             fee = 80m;
