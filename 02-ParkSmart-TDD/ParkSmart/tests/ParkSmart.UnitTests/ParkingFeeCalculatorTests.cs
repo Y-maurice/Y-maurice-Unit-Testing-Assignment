@@ -78,4 +78,22 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(20m);
     }
+    [Fact]
+    public void Calculate_ExitTimeBeforeEntryTime_ThrowsArgumentException()
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = new DateTime(2024, 1, 1, 10, 0, 0),
+            ExitTime = new DateTime(2024, 1, 1, 09, 59, 0), // 1 min before
+            Vehicle = VehicleType.Car
+        };
+
+        // Act
+        Action act = () => _calculator.Calculate(session);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("Exit time must be after entry time.");
+    }
 }
