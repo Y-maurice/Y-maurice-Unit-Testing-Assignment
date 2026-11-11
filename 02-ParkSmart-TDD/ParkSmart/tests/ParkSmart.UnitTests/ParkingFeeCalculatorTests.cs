@@ -192,4 +192,26 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(expectedFee);
     }
+
+    [Theory]
+    [InlineData(VehicleType.Car, 5, 150)]        // 5 mins normally free, lost ticket = 150 min
+    [InlineData(VehicleType.Motorcycle, 5, 75)]  // 5 mins normally free, lost ticket = 75 min
+    [InlineData(VehicleType.Truck, 30, 350)]     // 30 hours normal = 350, min is 300 Returns 350
+    public void Calculate_LostTicket_ReturnsMinimumOrNormalFeeWhicheverIsHigher(VehicleType vehicle, int hours, decimal expectedFee)
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = new DateTime(2024, 1, 1, 10, 0, 0),
+            ExitTime = new DateTime(2024, 1, 1, 10, 0, 0).AddHours(hours),
+            Vehicle = vehicle,
+            TicketLost = true
+        };
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(expectedFee);
+    }
 }
