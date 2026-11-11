@@ -42,4 +42,40 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(10m);
     }
+
+    [Fact]
+    public void Calculate_ExactlySixtyMinutes_ChargesTen()
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = new DateTime(2024, 1, 1, 10, 0, 0),
+            ExitTime = new DateTime(2024, 1, 1, 11, 0, 0),
+            Vehicle = VehicleType.Car
+        };
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(10m);
+    }
+
+    [Fact]
+    public void Calculate_SixtyOneMinutes_ChargesTwenty()
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = new DateTime(2024, 1, 1, 10, 0, 0),
+            ExitTime = new DateTime(2024, 1, 1, 11, 1, 0),
+            Vehicle = VehicleType.Car
+        };
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(20m);
+    }
 }
