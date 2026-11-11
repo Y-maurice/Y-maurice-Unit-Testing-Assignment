@@ -18,7 +18,19 @@ public class ParkingFeeCalculator
             return 0m;
         }
 
-        var hours = Math.Ceiling(duration.TotalHours);
-        return (decimal)hours * 10m;
+        var totalHours = (int)Math.Ceiling(duration.TotalHours);
+
+        var fullDays = totalHours / 24;
+        var remainingHours = totalHours % 24;
+
+        var fee = (fullDays * 80m) + (remainingHours * 10m);
+
+        // Cap the total if there are no full days (e.g., 10 hours)
+        if (fullDays == 0 && fee > 80m)
+        {
+            fee = 80m;
+        }
+
+        return fee;
     }
 }
