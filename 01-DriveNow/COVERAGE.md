@@ -24,7 +24,7 @@ Format: line % (covered/coverable) · branch % (covered/total).
 | --- | --- | --- | --- | --- | --- | --- |
 | Baseline (5 legacy tests only, before Task 1) | 2026-11-02 | 3.9% (4/101) · 0% (0/18) | 7.8% (27/346) · 3.2% (6/186) | 0% (0/200) · 0% (0/20) | 4.7% (31/647) · 2.6% (6/224) | `screenshots/coverage-baseline.png` |
 | After Task 1 | 2026-11-04 | 21.7% (22/101) · 61.1% (11/18) | 7.8% (27/346) · 3.2% (6/186) | 0% (0/200) · 0% (0/20) | 7.5% (49/647) · 7.5% (17/224) | `screenshots/coverage-after-task1.png` |
-| After Task 5 | | | | | | |
+| After Task 5 | 2026-11-11 | NEED DATA | 28.2% (125/442) · 28.2% (52/184) | NEED DATA | 12.1% (190/1560) · 19.3% (64/330) | `screenshots/coverage-after-task5.png` |
 | After Task 6 | | | | | | |
 | After Task 7 | | | | | | |
 | Final (ConsoleApp excluded) | | | | | | |
