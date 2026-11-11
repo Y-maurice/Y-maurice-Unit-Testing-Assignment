@@ -171,4 +171,25 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(expectedFee);
     }
+
+    [Theory]
+    [InlineData(VehicleType.Car, 30)]
+    [InlineData(VehicleType.Motorcycle, 15)]
+    [InlineData(VehicleType.Truck, 75)]
+    public void Calculate_NightEntryAndExit_ReturnsLowerFlatRate(VehicleType vehicle, decimal expectedFee)
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = new DateTime(2024, 1, 1, 23, 0, 0), // 23:00
+            ExitTime = new DateTime(2024, 1, 2, 07, 00, 0), // 07:00 next day (8 hours total)
+            Vehicle = vehicle
+        };
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(expectedFee);
+    }
 }
