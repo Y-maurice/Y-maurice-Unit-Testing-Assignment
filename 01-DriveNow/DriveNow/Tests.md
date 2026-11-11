@@ -101,7 +101,7 @@ The expected values come from the README tables and its worked examples, never f
 | BR-31 | <anything I did not cover, for example a rental that crosses the end of a month or a year> |
 | BR-36 | <for example: an empty string as the promo code> |
 
-**Why a fixed seed matters (R4).** The fakers use Bogus with a fixed seed, so every run builds the same names, e-mails, plates and ids. A test whose result does not depend on random data is only repeatable if the data cannot change between runs: with a random seed, a failure on one machine could not be reproduced on another, which breaks the "Repeatable" letter of FIRST. In `Calculate_RentalDays_BaseIsDailyRateTimesDays` random data is fine: the customer's name, e-mail and the vehicle's plate and model play no part in the result, and the values that matter (daily rate, number of days) are set explicitly. Random data is **not** fine for the customer's age in `Calculate_DriverAge_AddsYoungDriverSurcharge`: a faker that picked a random birth date could give a 20-year-old one day and a 25-year-old the next, and the surcharge would appear and disappear. That is why `CustomerFaker.WithAge(...)` computes the birth date from a given age and a given date, and why the other fields stay random but seeded.
+**Why a fixed seed matters (R4).** The fakers use Bogus with a fixed seed, so every run builds the same names, e-mails, plates and ids. A test whose result does not depend on random data is only repeatable if the data cannot change between runs: with a random seed, a failure on one machine could not be reproduced on another, which breaks the "Repeatable" letter of FIRST. In `Calculate_RentalDays_BaseIsDailyRateTimesDays` random data is fine: the customer's name, e-mail and the vehicle's plate and model play no part in the result, and the values that matter (daily rate, number of days) are set explicitly. Random data is not fine for the customer's age in `Calculate_DriverAge_AddsYoungDriverSurcharge`: a faker that picked a random birth date could give a 20-year-old one day and a 25-year-old the next, and the surcharge would appear and disappear. That is why `CustomerFaker.WithAge(...)` computes the birth date from a given age and a given date, and why the other fields stay random but seeded.
 
 **Snapshot or explicit assertions (R6).** A snapshot is better when the result is a large object whose every field matters and that nobody wants to retype, like the whole `PriceBreakdown` of examples A and B: one `Verify` call checks all ten fields, and the `.verified.txt` file shows the full breakdown in the review of the commit. Explicit assertions are better when the test is about one rule or one field (for example only the weekend surcharge): the expected number is written in the test next to its inputs, so a reader sees why it is right, and a failure message names the field. A snapshot also hides a danger: if it is accepted without checking, it records the current output, including a bug. For example B I checked the received file against the README before accepting it.
 
@@ -124,3 +124,36 @@ Accepted cases are implemented in a separate commit: `test(pricing): AI-suggeste
 
 ### Step 5: Judge the AI
 
+### Step 3: AI review
+
+Screenshot: `screenshots/ai-pricing.png` (the prompt from Section 01, with the BR rules and only my test names).
+
+### Step 4: Decide, then act
+
+| # | AI suggestion | Decision | Why |
+| --- | --- | --- | --- |
+| 1 | BR-03: exactly 60 minutes of leftover, one tick above and below | Rejected | These are the rental-days rule, tested in Task 1 (`RentalMathTests`: 1499, 1500 and 1501 minutes). In pricing, the days only have to feed the base (BR-30 test: 24 h, 72 h, 25 h 01 m, 96 h). |
+| 2 | BR-31: Friday, Saturday and Sunday pickups, Thursday for several days, a rental that crosses a weekend without a Friday or Saturday pickup | Rejected | All in my weekday theory (10 rows). |
+| 3 | BR-31: pickup late at night, the next day starts 24 hours later and not at midnight | Accepted | I had Thursday 23:00 for 2 days and Saturday 23:00, but not the "starts" rule from both sides. I add Thursday 23:00 for 1 day (0) and Friday 23:00 for 2 days (400). |
+| 4 | BR-32: ages 22 and 23, birthday on, before and after the pickup date | Rejected | I test 20, 21, 24 and 25 and four birthday positions; 22 and 23 are in the same class as 21 and 24. |
+| 5 | BR-32: young-driver surcharge together with the weekend surcharge | Rejected | Examples B and C combine both. |
+| 6 | BR-33 thresholds, all loyalty tiers, loyalty combined with duration and promo | Rejected | Covered: 6, 7, 13, 14 and 20 days; all four tiers; the combinations are in the BR-37 theory and the four whole scenarios. |
+| 7 | BR-35: a 0% promo, a decimal percentage, a promo combined with other discounts below the cap | Rejected | `DiscountPercent` is an `int`, so decimals do not exist. 0% is trivial. Below the cap is covered by the BR-37 rows (Silver with 5%, Gold with 5%). |
+| 8 | BR-36: each failure alone, case-insensitive lookup, first and last valid day, exactly the minimum days, allowed and disallowed category, null categories, usage limit | Rejected | All are among my 16 `[ClassData]` cases. |
+| 9 | BR-36: one day below the minimum | Accepted | My two minimum-days cases (3 of 3, and 3 of 7) did not make an adjacent pair. I add minimum 4 with 3 days. |
+| 10 | BR-36: precedence between several failures | Accepted (3 of 5) | I had dates versus category, and minimum days versus used count, which are not neighbours in the order. I add the three missing neighbour pairs: dates versus minimum days, minimum days versus category, category versus used count. "Missing code plus other failures" cannot happen (no promo means nothing else to check), and "expired plus exhausted" is not a neighbour pair. |
+| 11 | BR-37: promo alone above the cap, and the case where nothing is left for the promo | Accepted | New test: a 30% promo with no other discount is cut to 25%; 14 days with Gold (15% + 10%) cuts the promo to 0; 14 days with Silver leaves 5%. |
+| 12 | BR-37: exact, below and above the cap, only the promo is reduced, total never above 25% | Rejected | Already in my theory (30%, exactly 25%, 20%) with the 25% assertion. |
+| 13 | BR-37 table with a 20% duration discount (20% + 0% + 5%, 20% + 0% + 10%) | Rejected | Impossible: the duration discount is 10% or 15% (BR-33). See step 5. |
+| 14 | BR-38 and BR-39 matrices (plan by category, tier by number of drivers) | Rejected | Fully tested: 3 plans by Economy and Luxury plus Van and SUV; 4 tiers by 0 to 3 drivers. |
+| 15 | BR-40: the breakdown adds up exactly to the total | Accepted | New check on the four scenarios: the reported total equals the sum of the reported components. |
+| 16 | Rounding: 10.124, 10.125 and 10.126 | Accepted | The half-cent test becomes a theory with the value below, at and above the
+
+### Step 5: Judge the AI
+
+- **It listed many things I already had as "missing".** It only saw my test names. I compared every suggestion with my data and rejected the ones already covered: the weekday combinations of BR-31, the ages of BR-32, the thresholds of BR-33, all loyalty tiers, all 16 promo cases, and the insurance and driver matrices (rows 2, 4 to 8, 12 and 14).
+- **It made a factual mistake.** Its BR-37 table has a duration discount of 20% ("20% + 0% + 5%"), but BR-33 only allows 10% or 15%, so those rows cannot happen. I rejected them (row 13).
+- **It suggested cases the README does not support:** a negative daily rate for rounding (-10.125), and a decimal promo percentage (the promo percent is an integer). It also suggested "missing code plus other failures", which cannot happen because with no promo there is nothing else to validate.
+- **Its test names break my convention:** names like `Calculate_RentalDays_ExactlySixtyMinutesLeftover_ReturnsCurrentDays` have four parts, and one case per method goes against requirement R1 (`[Theory]` with `[InlineData]`). My own architecture test would fail them.
+- **It said `ReportsEveryWrongField` might be redundant with the snapshot.** I kept both: the task requires `AssertionScope` (R5) and a snapshot (R6), and they fail in different ways.
+- **It was right** about the neighbouring precedence pairs of BR-36, the case where nothing is left of the cap for the promo, the total equal to the sum of its parts, and the rounding values around the midpoint. I checked each against the README before accepting it.
