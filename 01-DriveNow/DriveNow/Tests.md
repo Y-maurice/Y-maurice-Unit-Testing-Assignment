@@ -59,3 +59,68 @@ I checked the AI's expected values against the README rules and found no wrong v
 - **It repeated itself.** The same scenario appears twice in its BR-01 table ("birthday is tomorrow" and "one day before birthday"), and "1 minute", "23h 59m" and the grace-hour cases appear in more than one of its tables. It also said none of my tests were redundant, while its own lists contain duplicates (rows 11 and 13).
 - **It did not suggest checking the grace rule beyond the first day.** All its BR-03 suggestions stay within the first 24-hour block plus one extra hour; none checks that a second block gets the same treatment (for example 49h 00m and 49h 01m).
 - **It was right about** the 72h README example, the exact multiples of 24h and the one-tick boundary, which I had missed.
+
+
+## Feature: PricingService (Task 5)
+
+### Step 1: My tests (commit `test(pricing): my tests`)
+
+All the tests are in `UnitTests/PricingServiceTests.cs`. The helpers are in `UnitTests/Support/`: `TestClock` (a fixed "now", Thursday 2026-01-15, through `FakeTimeProvider`), `CustomerFaker` and `VehicleFaker` (Bogus, fixed seed), `FakePromoCodeRepository` (a hand-written fake with a list) and `PromoCodeCases` (the `[ClassData]` provider).
+
+Every test starts from the same ordinary booking (an Economy car at 1,000 per day, a 30-year-old customer with no tier, Basic insurance, no additional drivers, no promo) and changes only what its rule is about, so a failure points at one rule.
+
+| Rule | Test | Cases (tool) |
+| --- | --- | --- |
+| BR-30 | `Calculate_RentalDays_BaseIsDailyRateTimesDays` | 24 h, 72 h, 25 h 01 m, another daily rate (`[InlineData]`) |
+| BR-30 | `Calculate_HalfCentRate_RoundsAwayFromZero` | a rate of 10.125 gives 10.13, not 10.12 |
+| BR-31 | `Calculate_PickupWeekday_AddsWeekendSurcharge` | pickup on every weekday, 1 to 3 days, and pickups at 23:00 where the day is counted by when it starts (`[InlineData]`) |
+| BR-32 | `Calculate_DriverAge_AddsYoungDriverSurcharge` | ages 20, 21, 24, 25, and birthdays one day before and one day after the pickup date |
+| BR-33 | `Calculate_RentalLength_AppliesDurationDiscount` | 6, 7, 13, 14 and 20 days |
+| BR-34 | `Calculate_LoyaltyTier_AppliesLoyaltyDiscount` | None, Silver, Gold, Platinum |
+| BR-35 | `Calculate_PromoPercent_AppliesPromoDiscount` | 10%, 15%, 20%, 25% |
+| BR-36 | `Calculate_PromoCases_ReturnsDiscountOrThrows` | 16 cases from `PromoCodeCases` (`[ClassData]`): no code, valid, case-insensitive, unknown, first and last valid day, expired, not valid yet, minimum days, category, used count, and two cases where the first failing check wins |
+| BR-37 | `Calculate_DiscountsAboveCap_ReducesPromo` | totals of 30%, exactly 25%, and 20% with Silver, Gold and no tier |
+| BR-38 | `Calculate_InsurancePlanAndCategory_AddsInsuranceCost` | three plans, Luxury doubled, Van and SUV not doubled |
+| BR-39 | `Calculate_AdditionalDrivers_AddsDriverCost` | 0 to 3 drivers for every tier (Gold and Platinum get the first driver free) |
+| BR-03 | `Calculate_ReturnNotAfterPickup_ThrowsArgumentException` | return equal to or before the pickup |
+| BR-40 | `Calculate_FullScenarios_ReturnsExpectedBreakdown` | four whole breakdowns (`[MemberData]`): README examples A and B, and my own examples C and D |
+| BR-40 | `Calculate_WorkedExampleB_ReportsEveryWrongField` | example B field by field inside one `AssertionScope` |
+| BR-40 | `Calculate_WorkedExampleA_MatchesSnapshot`, `Calculate_WorkedExampleB_MatchesSnapshot` | Verify snapshots |
+
+The expected values come from the README tables and its worked examples, never from the code. Examples C and D are my own, calculated by hand with the README formulas.
+
+**Result of running my tests:** 114 tests in the project, 103 pass and 11 fail. The 1500-minute `RentalMath` case is the old failure from Task 1. The other 10 follow the README and expose three bugs in `PricingService`: (1) BR-33, a 7-day rental gets no duration discount (expected 700, found 0); (2) BR-37, the cap is applied to the loyalty discount and the promo is never cut (for example Gold plus a 10% promo on 10 days: expected promo 500, found 1000); (3) BR-39, Silver customers get a free additional driver (expected 200, found 0). Worked examples B and D fail because of these bugs: B's total is 12,675.00 instead of 12,850.00 (the three errors add up to exactly -175), and D's is 6,890.00 instead of 7,345.00 (the over-sized promo, 455). I have not changed any production code
+
+### Step 2: My own judgment
+
+**Gaps and unclear points**
+
+| Rule | What I see |
+| --- | --- |
+| BR-37 | When Platinum (15%) is combined with 14 or more days (15%), the duration and loyalty discounts alone are already 30%. The README says to keep duration and loyalty and reduce only the promo, which would leave 30%, above the cap. The rule does not say what to do, so I did not test that combination. |
+| BR-31 | <anything I did not cover, for example a rental that crosses the end of a month or a year> |
+| BR-36 | <for example: an empty string as the promo code> |
+
+**Why a fixed seed matters (R4).** The fakers use Bogus with a fixed seed, so every run builds the same names, e-mails, plates and ids. A test whose result does not depend on random data is only repeatable if the data cannot change between runs: with a random seed, a failure on one machine could not be reproduced on another, which breaks the "Repeatable" letter of FIRST. In `Calculate_RentalDays_BaseIsDailyRateTimesDays` random data is fine: the customer's name, e-mail and the vehicle's plate and model play no part in the result, and the values that matter (daily rate, number of days) are set explicitly. Random data is **not** fine for the customer's age in `Calculate_DriverAge_AddsYoungDriverSurcharge`: a faker that picked a random birth date could give a 20-year-old one day and a 25-year-old the next, and the surcharge would appear and disappear. That is why `CustomerFaker.WithAge(...)` computes the birth date from a given age and a given date, and why the other fields stay random but seeded.
+
+**Snapshot or explicit assertions (R6).** A snapshot is better when the result is a large object whose every field matters and that nobody wants to retype, like the whole `PriceBreakdown` of examples A and B: one `Verify` call checks all ten fields, and the `.verified.txt` file shows the full breakdown in the review of the commit. Explicit assertions are better when the test is about one rule or one field (for example only the weekend surcharge): the expected number is written in the test next to its inputs, so a reader sees why it is right, and a failure message names the field. A snapshot also hides a danger: if it is accepted without checking, it records the current output, including a bug. For example B I checked the received file against the README before accepting it.
+
+
+**My verdict:** I think these tests are enough to expose the main pricing bugs, and the run proved it: they found three disagreements with the README (BR-33, BR-37 and BR-39). Every rule from BR-30 to BR-40 has its own test with both sides of its boundaries (6/7/13/14 days, ages 20/21/24/25, exactly 25% and above the cap), the 16 promo cases, and four whole-breakdown scenarios whose expected values I calculated from the README and not from the code. They are not exhaustive. I know I am missing: (1) the BR-37 case where the duration and loyalty discounts alone already pass 25% (Platinum with 14 days or more), because the README does not say what to do; (2) an empty-string promo code; (3) the rounding of the percentage-based amounts (I only tested the rounding of the base, with a half-cent daily rate); and (4) more combinations of several surcharges and discounts in one booking than my four scenarios.
+
+
+
+### Step 3: AI review
+
+
+
+### Step 4: Decide, then act
+
+| # | AI suggestion | Decision | Why |
+| --- | --- | --- | --- |
+| | | | |
+
+Accepted cases are implemented in a separate commit: `test(pricing): AI-suggested cases`.
+
+### Step 5: Judge the AI
+
