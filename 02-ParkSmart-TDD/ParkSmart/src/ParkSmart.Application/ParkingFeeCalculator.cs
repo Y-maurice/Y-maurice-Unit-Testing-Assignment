@@ -18,21 +18,38 @@ public class ParkingFeeCalculator
             return 0m;
         }
 
-        return CalculateBaseFee(duration);
+        return CalculateBaseFee(duration, session.Vehicle);
     }
 
-    private decimal CalculateBaseFee(TimeSpan duration)
+    private decimal CalculateBaseFee(TimeSpan duration, VehicleType vehicle)
     {
+        var hourlyRate = vehicle switch
+        {
+            VehicleType.Car => 10m,
+            VehicleType.Motorcycle => 5m,
+            VehicleType.Truck => 25m,
+            _ => throw new ArgumentOutOfRangeException(nameof(vehicle))
+        };
+
+        var dailyCap = vehicle switch
+        {
+            VehicleType.Car => 80m,
+            VehicleType.Motorcycle => 40m,
+            VehicleType.Truck => 200m,
+            _ => throw new ArgumentOutOfRangeException(nameof(vehicle))
+        };
+
         var totalHours = (int)Math.Ceiling(duration.TotalHours);
 
         var fullDays = totalHours / 24;
         var remainingHours = totalHours % 24;
 
-        var fee = (fullDays * 80m) + (remainingHours * 10m);
+        var fee = (fullDays * dailyCap) + (remainingHours * hourlyRate);
 
-        if (fullDays == 0 && fee > 80m)
+        // Apply cap if it's within the first 24 hours
+        if (fullDays == 0 && fee > dailyCap)
         {
-            fee = 80m;
+            fee = dailyCap;
         }
 
         return fee;
