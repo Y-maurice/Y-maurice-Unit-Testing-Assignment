@@ -18,7 +18,40 @@ public class ParkingFeeCalculator
             return 0m;
         }
 
-        return CalculateBaseFee(duration, session.Vehicle);
+        var baseFee = CalculateBaseFee(duration, session.Vehicle);
+
+        if (IsNightRate(session.EntryTime, session.ExitTime))
+        {
+            var flatRate = GetNightFlatRate(session.Vehicle);
+            return Math.Min(baseFee, flatRate);
+        }
+
+        return baseFee;
+    }
+
+    private bool IsNightRate(DateTime entryTime, DateTime exitTime)
+    {
+        var entryTimeOfDay = entryTime.TimeOfDay;
+        var exitTimeOfDay = exitTime.TimeOfDay;
+
+        // Entry at or after 22:00
+        var isLateEntry = entryTimeOfDay >= new TimeSpan(22, 0, 0);
+
+        // Exit at or before 08:00 the next morning
+        var isEarlyExit = exitTimeOfDay <= new TimeSpan(8, 0, 0) && exitTime.Date > entryTime.Date;
+
+        return isLateEntry && isEarlyExit;
+    }
+
+    private decimal GetNightFlatRate(VehicleType vehicle)
+    {
+        return vehicle switch
+        {
+            VehicleType.Car => 30m,
+            VehicleType.Motorcycle => 15m,
+            VehicleType.Truck => 75m,
+            _ => throw new ArgumentOutOfRangeException(nameof(vehicle))
+        };
     }
 
     private decimal CalculateBaseFee(TimeSpan duration, VehicleType vehicle)
@@ -46,7 +79,6 @@ public class ParkingFeeCalculator
 
         var fee = (fullDays * dailyCap) + (remainingHours * hourlyRate);
 
-        // Apply cap if it's within the first 24 hours
         if (fullDays == 0 && fee > dailyCap)
         {
             fee = dailyCap;
