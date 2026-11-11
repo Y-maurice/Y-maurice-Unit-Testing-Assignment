@@ -150,4 +150,25 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(170m); // 80 + 80 + 10
     }
+
+    [Theory]
+    [InlineData(3, VehicleType.Motorcycle, 15)] // 3 * 5
+    [InlineData(10, VehicleType.Truck, 200)]     // 10 * 25 = 250, capped at 200
+    [InlineData(30, VehicleType.Truck, 350)]     // 24h cap (200) + 6h (150)
+    public void Calculate_VehicleRates_ReturnCorrectFee(int hours, VehicleType vehicle, decimal expectedFee)
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = new DateTime(2024, 1, 1, 10, 0, 0),
+            ExitTime = new DateTime(2024, 1, 1, 10, 0, 0).AddHours(hours),
+            Vehicle = vehicle
+        };
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(expectedFee);
+    }
 }
