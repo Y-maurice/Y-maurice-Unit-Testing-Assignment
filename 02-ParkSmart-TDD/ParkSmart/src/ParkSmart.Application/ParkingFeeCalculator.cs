@@ -13,12 +13,15 @@ public class ParkingFeeCalculator
 
         var duration = session.ExitTime - session.EntryTime;
 
-        if (duration.TotalMinutes <= 15)
+        if (duration.TotalMinutes <= 15 && !session.TicketLost)
         {
             return 0m;
         }
 
         var baseFee = CalculateBaseFee(duration, session.Vehicle);
+
+        var finalFee = baseFee;
+
 
         if (IsNightRate(session.EntryTime, session.ExitTime))
         {
@@ -26,7 +29,19 @@ public class ParkingFeeCalculator
             return Math.Min(baseFee, flatRate);
         }
 
-        return baseFee;
+        if (session.TicketLost)
+        {
+            var lostTicketMinimum = session.Vehicle switch
+            {
+                VehicleType.Car => 150m,
+                VehicleType.Motorcycle => 75m,
+                VehicleType.Truck => 300m,
+                _ => throw new ArgumentOutOfRangeException(nameof(session.Vehicle))
+            };
+            finalFee = Math.Max(finalFee, lostTicketMinimum);
+        }
+
+        return finalFee;
     }
 
     private bool IsNightRate(DateTime entryTime, DateTime exitTime)
