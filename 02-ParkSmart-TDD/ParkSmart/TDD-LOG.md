@@ -14,3 +14,4 @@
 | red(S6) / green(S6) | Calculate_NightEntryAndExit_ReturnsLowerFlatRate | Expected fee to be 30M, 15M, 75M, but found 80M, 40M, 200M. | Added night flat rate logic and Math.Min comparison. | None |
 | red(S7) / green(S7) | Calculate_LostTicket_ReturnsMinimumOrNormalFeeWhicheverIsHigher | Expected fee to be 150M, but found 0M. | Skip 15-min free rule if TicketLost, apply Math.Max for lost ticket minimum. | None |
 | red(S8) / green(S8) | Calculate_FridayEntry_AppliesTwoHourFreePeriod | Expected fee to be 0M, but found 10M. | Added logic to check DayOfWeek for Friday and set free period to 120 mins. | None |
+| red(S9) / green(S9) | Calculate_Subscriber_AppliesCorrectDiscountOrFreePeriod | Expected fee to be 0M, but found 10M. | Added subscriber logic to check days/times for free parking, otherwise 50% discount. | None |

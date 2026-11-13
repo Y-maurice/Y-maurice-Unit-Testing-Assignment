@@ -236,4 +236,34 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(expectedFee);
     }
+
+    [Theory]
+    // Free conditions
+    [InlineData("2024-01-08", 9, 0, "2024-01-08", 17, 0, false, 0)] // Monday 09:00-17:00 -> 0
+    // Not free, apply 50%
+    [InlineData("2024-01-08", 18, 0, "2024-01-08", 20, 0, false, 10)] // Monday 18:00-20:00 -> 20 -> 10
+    [InlineData("2024-01-06", 10, 0, "2024-01-06", 13, 0, false, 15)] // Saturday 3h -> 30 -> 15
+    // Lost ticket minimum after discount
+    [InlineData("2024-01-08", 10, 0, "2024-01-08", 11, 0, true, 150)] // Monday 1h -> 10 -> 5 -> max(5, 150) = 150
+    public void Calculate_Subscriber_AppliesCorrectDiscountOrFreePeriod(
+    string entryDate, int entryHour, int entryMin,
+    string exitDate, int exitHour, int exitMin,
+    bool ticketLost, decimal expectedFee)
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = DateTime.Parse(entryDate).AddHours(entryHour).AddMinutes(entryMin),
+            ExitTime = DateTime.Parse(exitDate).AddHours(exitHour).AddMinutes(exitMin),
+            Vehicle = VehicleType.Car,
+            IsSubscriber = true,
+            TicketLost = ticketLost
+        };
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(expectedFee);
+    }
 }
