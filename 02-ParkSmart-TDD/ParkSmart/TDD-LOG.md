@@ -15,3 +15,4 @@
 | red(S7) / green(S7) | Calculate_LostTicket_ReturnsMinimumOrNormalFeeWhicheverIsHigher | Expected fee to be 150M, but found 0M. | Skip 15-min free rule if TicketLost, apply Math.Max for lost ticket minimum. | None |
 | red(S8) / green(S8) | Calculate_FridayEntry_AppliesTwoHourFreePeriod | Expected fee to be 0M, but found 10M. | Added logic to check DayOfWeek for Friday and set free period to 120 mins. | None |
 | red(S9) / green(S9) | Calculate_Subscriber_AppliesCorrectDiscountOrFreePeriod | Expected fee to be 0M, but found 10M. | Added subscriber logic to check days/times for free parking, otherwise 50% discount. | None |
+| red(S10) / green(S10) | Calculate_EvCharging_AddsCostAfterEverythingElse & Calculate_NegativeKwh_ThrowsArgumentException | Expected fee to be 55M, but found 20M. Expected ArgumentException, but none thrown. | Added validation for negative kWh and added EV charge calculation at the very end. | None |

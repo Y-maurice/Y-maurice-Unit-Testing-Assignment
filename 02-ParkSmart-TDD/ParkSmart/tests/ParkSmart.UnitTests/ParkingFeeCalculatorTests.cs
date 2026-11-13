@@ -266,4 +266,49 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(expectedFee);
     }
+
+    [Theory]
+    [InlineData(2, 10, false, 55)] // 2h (20) + 10kWh (35) = 55
+    [InlineData(0, 4, true, 14)]   // Subscriber free (0) + 4kWh (14) = 14
+    public void Calculate_EvCharging_AddsCostAfterEverythingElse(int hours, int kwh, bool isSubscriber, decimal expectedFee)
+    {
+        // Arrange
+        var entryTime = new DateTime(2024, 1, 8, 9, 0, 0); // Monday 09:00
+        var session = new ParkingSession
+        {
+            EntryTime = entryTime,
+            ExitTime = entryTime.AddHours(hours), // For subscriber free window test 0 hours duration is good
+            Vehicle = VehicleType.Car,
+            IsSubscriber = isSubscriber,
+            ChargedKwh = kwh
+        };
+
+        // If duration is 0, need to make sure it doesn't hit the 15 min free rule to test the EV addition properly.
+        // if hours = 0, duration is 0, 0 <= 15, so it returns 0. Then EV adds
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(expectedFee);
+    }
+
+    [Fact]
+    public void Calculate_NegativeKwh_ThrowsArgumentException()
+    {
+        // Arrange
+        var session = new ParkingSession
+        {
+            EntryTime = new DateTime(2024, 1, 1, 10, 0, 0),
+            ExitTime = new DateTime(2024, 1, 1, 11, 0, 0),
+            Vehicle = VehicleType.Car,
+            ChargedKwh = -1
+        };
+
+        // Act
+        Action act = () => _calculator.Calculate(session);
+
+        // Assert
+        act.Should().Throw<ArgumentException>().WithMessage("*Charged kWh cannot be negative*");
+    }
 }
