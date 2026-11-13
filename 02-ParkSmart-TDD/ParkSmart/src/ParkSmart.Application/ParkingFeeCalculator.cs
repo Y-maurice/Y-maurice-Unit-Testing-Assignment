@@ -11,6 +11,11 @@ public class ParkingFeeCalculator
             throw new ArgumentException("Exit time must be after entry time.");
         }
 
+        if (session.ChargedKwh < 0)
+        {
+            throw new ArgumentException("Charged kWh cannot be negative.");
+        }
+
         var duration = session.ExitTime - session.EntryTime;
         decimal finalFee = 0m;
 
@@ -57,7 +62,15 @@ public class ParkingFeeCalculator
             finalFee = Math.Max(finalFee, lostTicketMinimum);
         }
 
+        // EV Charging (Never discounted or capped)
+        if (session.ChargedKwh > 0)
+        {
+            finalFee += (decimal)session.ChargedKwh * 3.50m;
+        }
+
         return finalFee;
+
+
     }
     private bool IsSubscriberFree(ParkingSession session)
     {
