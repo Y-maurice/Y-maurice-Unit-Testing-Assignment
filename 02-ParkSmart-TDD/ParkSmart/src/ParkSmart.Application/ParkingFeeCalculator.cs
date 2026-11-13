@@ -13,7 +13,9 @@ public class ParkingFeeCalculator
 
         var duration = session.ExitTime - session.EntryTime;
 
-        if (duration.TotalMinutes <= 15 && !session.TicketLost)
+        var freePeriodMinutes = session.EntryTime.DayOfWeek == DayOfWeek.Friday ? 120 : 15;
+
+        if (duration.TotalMinutes <= freePeriodMinutes && !session.TicketLost)
         {
             return 0m;
         }
