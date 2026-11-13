@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Bogus" Version="35.6.5" />
+	<PackageReference Include="coverlet.collector" Version="10.1.0" />
+	<PackageReference Include="FluentAssertions" Version="7.2.2" />
+	<PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="11.0.0" />
+	<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+	<PackageReference Include="Verify.Xunit" Version="31.12.5" />
+	<PackageReference Include="xunit" Version="2.9.3" />
+	<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\DriveNow.Domain\DriveNow.Domain.csproj" />
+    <ProjectReference Include="..\src\DriveNow.Application\DriveNow.Application.csproj" />
+    <ProjectReference Include="..\src\DriveNow.Infrastructure\DriveNow.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

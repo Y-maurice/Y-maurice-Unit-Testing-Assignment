@@ -1,0 +1,12 @@
+﻿   {
+     RentalDays: 7,
+     BaseAmount: 10500.0,
+     WeekendSurcharge: 600.00,
+     YoungDriverSurcharge: 1575.00,
+     DurationDiscount: 1050.0,
+     LoyaltyDiscount: 525.0,
+     PromoDiscount: 1050.0,
+     InsuranceCost: 2100.0,
+     AdditionalDriversCost: 700.0,
+     Total: 12850.00
+   }

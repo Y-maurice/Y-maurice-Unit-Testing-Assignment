@@ -1,0 +1,58 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+out/
+[Ll]og/
+[Bb]uild[Ll]og.*
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio generated files
+*.cache
+*.pdb
+*.ilk
+*.meta
+*.opendb
+*.VC.db
+
+# NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+
+# Test results and coverage (generated)
+[Tt]est[Rr]esult*/
+coveragereport/
+
+# Verify: never commit received files, always commit verified files
+*.received.*
+!*.verified.txt
+
+# Files the app writes next to the binaries
+outbox/
+audit.log
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# My scratch output (console comparisons and test runs)
+before*.txt
+after*.txt
+baseline*.txt
+flow-*.txt
+run*.txt
