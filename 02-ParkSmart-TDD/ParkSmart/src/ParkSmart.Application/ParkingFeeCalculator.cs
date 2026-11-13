@@ -12,25 +12,39 @@ public class ParkingFeeCalculator
         }
 
         var duration = session.ExitTime - session.EntryTime;
+        decimal finalFee = 0m;
 
-        var freePeriodMinutes = session.EntryTime.DayOfWeek == DayOfWeek.Friday ? 120 : 15;
-
-        if (duration.TotalMinutes <= freePeriodMinutes && !session.TicketLost)
+        //  Subscriber Free Check
+        if (session.IsSubscriber && IsSubscriberFree(session))
         {
-            return 0m;
+            finalFee = 0m;
+        }
+        else
+        {
+            var freePeriodMinutes = session.EntryTime.DayOfWeek == DayOfWeek.Friday ? 120 : 15;
+
+            if (duration.TotalMinutes <= freePeriodMinutes && !session.TicketLost)
+            {
+                return 0m; // Safe to return here 
+            }
+
+            var baseFee = CalculateBaseFee(duration, session.Vehicle);
+            finalFee = baseFee;
+
+            if (IsNightRate(session.EntryTime, session.ExitTime))
+            {
+                var flatRate = GetNightFlatRate(session.Vehicle);
+                finalFee = Math.Min(baseFee, flatRate);
+            }
+
+            //  Subscriber 50% Discount
+            if (session.IsSubscriber)
+            {
+                finalFee = finalFee * 0.5m;
+            }
         }
 
-        var baseFee = CalculateBaseFee(duration, session.Vehicle);
-
-        var finalFee = baseFee;
-
-
-        if (IsNightRate(session.EntryTime, session.ExitTime))
-        {
-            var flatRate = GetNightFlatRate(session.Vehicle);
-            return Math.Min(baseFee, flatRate);
-        }
-
+        //  Lost Ticket Minimum (applied after discounts)
         if (session.TicketLost)
         {
             var lostTicketMinimum = session.Vehicle switch
@@ -44,6 +58,16 @@ public class ParkingFeeCalculator
         }
 
         return finalFee;
+    }
+    private bool IsSubscriberFree(ParkingSession session)
+    {
+        if (session.EntryTime.Date != session.ExitTime.Date) return false;
+        if (session.EntryTime.DayOfWeek == DayOfWeek.Friday || session.EntryTime.DayOfWeek == DayOfWeek.Saturday) return false;
+
+        var entryTimeOfDay = session.EntryTime.TimeOfDay;
+        var exitTimeOfDay = session.ExitTime.TimeOfDay;
+
+        return entryTimeOfDay >= new TimeSpan(7, 0, 0) && exitTimeOfDay <= new TimeSpan(19, 0, 0);
     }
 
     private bool IsNightRate(DateTime entryTime, DateTime exitTime)
