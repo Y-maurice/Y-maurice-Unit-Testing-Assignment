@@ -214,4 +214,26 @@ public class ParkingFeeCalculatorTests
         // Assert
         fee.Should().Be(expectedFee);
     }
+
+    [Theory]
+    [InlineData(2024, 1, 5, 2, 0, 0)] // Friday 2 hours exactly -> 0
+    [InlineData(2024, 1, 5, 2, 1, 30)] // Friday 2 hours 1 min -> 30 (3 started hours)
+    [InlineData(2024, 1, 4, 0, 20, 10)] // Thursday 20 mins -> 10 (not free)
+    public void Calculate_FridayEntry_AppliesTwoHourFreePeriod(int year, int month, int day, int hours, int minutes, decimal expectedFee)
+    {
+        // Arrange
+        var entryTime = new DateTime(year, month, day, 10, 0, 0); // 10:00 AM
+        var session = new ParkingSession
+        {
+            EntryTime = entryTime,
+            ExitTime = entryTime.AddHours(hours).AddMinutes(minutes),
+            Vehicle = VehicleType.Car
+        };
+
+        // Act
+        var fee = _calculator.Calculate(session);
+
+        // Assert
+        fee.Should().Be(expectedFee);
+    }
 }
