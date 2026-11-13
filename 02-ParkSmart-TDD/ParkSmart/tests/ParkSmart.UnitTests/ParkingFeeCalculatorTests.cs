@@ -22,7 +22,7 @@ public class ParkingFeeCalculatorTests
         var fee = _calculator.Calculate(session);
 
         // Assert
-        fee.Should().Be(0m);
+        fee.Should().Be(99m);
     }
 
     [Fact]

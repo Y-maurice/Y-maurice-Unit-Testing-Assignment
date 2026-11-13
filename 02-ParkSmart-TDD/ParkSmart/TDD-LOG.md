@@ -16,3 +16,10 @@
 | red(S8) / green(S8) | Calculate_FridayEntry_AppliesTwoHourFreePeriod | Expected fee to be 0M, but found 10M. | Added logic to check DayOfWeek for Friday and set free period to 120 mins. | None |
 | red(S9) / green(S9) | Calculate_Subscriber_AppliesCorrectDiscountOrFreePeriod | Expected fee to be 0M, but found 10M. | Added subscriber logic to check days/times for free parking, otherwise 50% discount. | None |
 | red(S10) / green(S10) | Calculate_EvCharging_AddsCostAfterEverythingElse & Calculate_NegativeKwh_ThrowsArgumentException | Expected fee to be 55M, but found 20M. Expected ArgumentException, but none thrown. | Added validation for negative kWh and added EV charge calculation at the very end. | None |
+
+
+## Reflection
+
+**Which stage forced the biggest change to earlier code, and what that taught you about designing up front?**
+
+Stage 9 (Subscribers) and Stage 10 (EV Charging) forced the biggest changes to earlier code. In S10, I realized I couldn't just `return 0m` early for free parking because EV charging had to be applied after everything else, even if the parking itself was free. I had to refactor the method to use an `isFree` flag and calculate the final fee at the end. This taught me that designing the order of operations (especially for discounts, minimums, and add-ons) is crucial up front. If I had just rushed to make S1 pass with early returns, the later requirements would have required a complete rewrite of the method.
